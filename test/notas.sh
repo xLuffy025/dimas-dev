@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-IFS=1'\n\t'
+IFS=$'\n\t'
 
 # -------------------------------------------------------
 #       Colores
@@ -44,24 +44,31 @@ crear_nota() {
   while true; do 
     read -p "Nombre de Titulo: " nota 
     cancelar_si_solicita "$nota" || return 0
-    
-  # Validación: no vacio
-    [[ -z "$nota"  ]] && 
-    err "El Titulo no puede estar vacío." && 
+
+    # Validación: no vacio
+    [[ -z "$nota"  ]] && {
+      err "El Titulo no puede estar vacío." && 
     continue
+    }
 
   # Validación: caracteres permitidos
-    [[ ! "$nota" =~ ^[A-Za-z0-9_]+$ ]] &&
-    err "Solo letras/números/_ " &&
+    [[ ! "$nota" =~ ^[A-Za-z0-9_]+$ ]] && {
+    err "Solo permite letras, número y _ ... " &&
     continue
+    }
+  
+  # Validación: existencía previa
+    if [[ -f "$HOME/nota/$nota.md" ]]; then
+      err "Aviso: la nota ya existe. No se puede Sobrescribirá.."
+      continue
+    fi 
 
-  # Validación: existencia previa 
-  #  grep -q "^$TITLE," DATA_DIR
-
+    break 
+  done
 
   #validar carpeta 
   dir="$HOME/nota"
-  filename="$dir/{$nota}.md"
+  filename="$dir/$nota.md"
   title="$nota"
 
   # Crear carpeta si no existe 
@@ -72,7 +79,6 @@ crear_nota() {
 
   nvim "$filename"
 
-done
 }
 
 lista_notas() {
@@ -98,9 +104,9 @@ eliminar_nota(){
 # --------------------------------------------------------
 mostrar_menu() {
   clear 
-  echo -e "${CYAN}╔═══════════════════════════════════════╗${RESET}"
-  echo -e "${CYAN}║ 🚀 ${MAGENTA}Notas Mackdown ${RESET} ${CYAN}                    ║${RESET}"
-  echo -e "${CYAN}╚═══════════════════════════════════════╝${RESET}"
+  echo -e "${CYAN}==============================${RESET}"
+  echo -e "${CYAN} 🚀 Notas Mackdown      ${RESET}"
+  echo -e "${CYAN}==============================${RESET}"
   echo -e "${YELLOW}1)${RESET} Crear Nota" 
   echo -e "${YELLOW}2)${RESET} Listar Notas"
   echo -e "${YELLOW}3)${RESET} Buscar por palabra"
