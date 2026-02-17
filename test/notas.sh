@@ -51,20 +51,24 @@ crear_nota() {
 
     # Validación: no vacio
     [[ -z "$nota"  ]] && {
-      err "El Titulo no puede estar vacío." && 
+      err "El Titulo no puede estar vacío." &&
+      pausa &&
     continue
     }
 
   # Validación: caracteres permitidos
     [[ ! "$nota" =~ ^[A-Za-z0-9_]+$ ]] && {
     err "Solo permite letras, número y _ ... " &&
+    pausa &&
     continue
     }
   
   # Validación: existencía previa
     if [[ -f "$HOME/nota/$nota.md" ]]; then
       err "Aviso: la nota ya existe. No se puede Sobrescribirá.."
+      pausa && 
       continue
+
     fi 
 
     break 
@@ -83,8 +87,13 @@ crear_nota() {
 lista_notas() {
   clear
 
-  echo "Notas disponibles:"
-  lsd -1 "$DATA_DIR"/*.md 2>/dev/null
+  notas=("$DATA_DIR"/*.md)
+
+  echo "Notas:"
+  for i in "${!notas[@]}"; do 
+    nombre=$(basename "${notas[$i]%.md}")
+    echo "$((i+1))) $nombre"
+  done 
 
 }
 
@@ -94,8 +103,60 @@ buscar_nota(){
 }
 
 editar_nota(){
-  msg "En proceso"
+  notas=("$DATA_DIR"/*.md)
+
+  # Validación: si hay notas 
+  if [[ ! -e "${notas[0]}" ]]; then
+    err "No hay notas Disponibles."
+    pause &&
+    continue
+  fi 
+
+  msg "Notas Disponibles:"
+  for i in "${!notas[@]}"; do 
+    nombre=$(basename "${notas[$i]%.md}")
+    echo "$((i+1))) $nombre"
+  done 
+
+  # Pedir sececcion
+  while true; do 
+    read -p "Seleccione una nota por numero: " opt
+
+    # Validación sea numero 
+    [[ "$opt" =~ ^[0-9]+$ ]] || {
+      err "Ingresa un numero valido."
+      pause &&
+      continue
+ 
+
+    }
+  # Convertir a indice (0 based)
+  idx=$((opcion-1))
   
+  # Validación: rango 
+    if (( idx >= 0 && idx < ${#notas[@]} )); then
+    seleccion="${notas[$idx]}"
+  #  msg "Seleccionaste: $(basename "$seleccion")"
+  #  nota_selecionada="$seleccion"
+  #fi 
+
+  #if [ -f "$idx" ]; then 
+    msg "Que desea hacer con  tus notas?"
+    echo "1) Ver con glow"
+    echo "2) Editar con neovim"
+    read -p "Elige una opcion (1/2): " opcion
+
+    case $opcion in 
+      1) glow "$notas" ;;
+      2) nvim "$notas" ;;
+      *) err "Opcion invalida... " ;;
+    esac
+  fi
+done
+
+
+
+
 }
 
 eliminar_nota(){
