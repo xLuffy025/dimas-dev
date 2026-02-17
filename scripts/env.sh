@@ -1,30 +1,32 @@
 #!/usr/bin/env bash
-# Universal environment detector — Termux / Proot / Linux
-# Autor: xLuffy025 (versión refinada)
+# Universal environment detector (Termux / Proot / Linux)
+# Autor: xLuffy025
 
 set -u
 
-# ==== Detect TERMUX ====
+# ==== Detect Termux ====
 detect_termux() {
-  [[ -d "/data/data/com.termux/files/usr" && "$PREFIX" == *"/data/data/com.termux/files/usr"* ]]
+  [[ -d "/data/data/com.termux/files" && -n "${PREFIX:-}" && "$PREFIX" == *"com.termux"* ]]
 }
 
-# ==== Detect PROOT ====
+# ==== Detect Proot ====
 detect_proot() {
-  # Si el proceso 1 no es init/systemd, o si los mounts apuntan a termux/files/usr
   if grep -q "/data/data/com.termux/files/usr" /proc/mounts 2>/dev/null; then
+    return 0
+  fi
+  if [ ! -d /run/systemd/system ] && [ ! -f /sbin/init ]; then
     return 0
   fi
   if grep -q "proot" /proc/1/cmdline 2>/dev/null; then
     return 0
   fi
-  if [ -f /etc/os-release ]; then
-    grep -q "proot" /etc/os-release && return 0
+  if grep -q "archarm" /etc/os-release 2>/dev/null; then
+    return 0
   fi
   return 1
 }
 
-# ==== Detect DISTRO (para Linux/Proot) ====
+# ==== Detect Distro ID ====
 detect_distro() {
   if [ -f /etc/os-release ]; then
     . /etc/os-release
@@ -34,36 +36,38 @@ detect_distro() {
   fi
 }
 
-# ==== Detect PACKAGE MANAGER ====
+# ==== Detect Package Manager ====
 detect_pkgmgr() {
   local env="$1"
-  case "$env" in
-    termux)
-      echo "pkg"
-      ;;
-    proot|linux)
-      for p in pacman apt dnf yum zypper apk; do
-        command -v "$p" >/dev/null 2>&1 && { echo "$p"; return; }
-      done
-      echo "unknown"
-      ;;
-    *)
-      echo "unknown"
-      ;;
-  esac
- 
+  # Si es termux puro
+  if [ "$env" = "termux" ]; then
+    echo "pkg"
+    return
+  fi
 
-# ==== Detect USER privilege ====
+  # Si es proot o linux real, prioriza según distro o binarios
+  for p in pacman apt dnf yum zypper apk; do
+    command -v "$p" >/dev/null 2>&1 && { echo "$p"; return; }
+  done
+
+  # Si todo falla, intenta fallback
+  if command -v pkg >/dev/null 2>&1; then
+    echo "pkg"
+  else
+    echo "unknown"
+  fi
+}
+
+# ==== Detect User Privilege ====
 if [ "$(id -u)" -eq 0 ]; then
   IS_ROOT=1; SUDO=""
 else
   IS_ROOT=0; SUDO="sudo"
 fi
 
-# ==== MAIN DETECTION LOGIC ====
+# ==== Determine environment ====
 if detect_termux; then
-  # ⚠️ importante: solo se marca proot si hay diferencia real
-  if detect_proot && [ -f "/etc/os-release" ]; then
+  if detect_proot; then
     ENV="proot"
   else
     ENV="termux"
@@ -79,13 +83,13 @@ fi
 OS_ID=$(detect_distro)
 PKG=$(detect_pkgmgr "$ENV")
 
+# ==== Export ====
 export ENV OS_ID PKG IS_ROOT SUDO
 
-# ==== Info resumen ====
+# ==== Optional summary ====
 if [ -t 1 ]; then
-  echo -e "\n🌍 Entorno detectado: ${ENV}"
-  echo -e "🐧 Distro: ${OS_ID:-N/A}"
-  echo -e "📦 Gestor: ${PKG:-unknown}"
-  echo -e "🔑 Root: ${IS_ROOT}\n"
-fi 
-
+  echo -e "\n🌍 Entorno detectado: $ENV"
+  echo -e "🐧 Distro: $OS_ID"
+  echo -e "📦 Gestor: $PKG"
+  echo -e "🔑 Root: $IS_ROOT\n"
+fi

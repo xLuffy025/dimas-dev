@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 
 # ============================================================
 # Termux Setup Complete - Instalador principal
@@ -77,7 +77,7 @@ instalar_vim_nvim(){
 
 instalar_tmux(){
   msg "Instalando Tmux..."
-  pkg install -y tmux
+  source "$SCRIPT_DIR/env.sh"
   if [ -f "configs/.tmux.conf" ]; then
     cp configs/.tmux.conf ~/.tmux.conf
     ok "Archivo .tmux.conf instalado."
