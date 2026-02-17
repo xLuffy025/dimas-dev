@@ -29,6 +29,43 @@ err(){ echo -e "${RED} [✖️]  ${RESET} $1"; }
 # --------------------------------------------------------
 #   FUNCIONES GENERALES
 # --------------------------------------------------------
+obtener_notas(){
+  notas="$DATA_DIR"/*.md
+}
+
+validar_notas(){
+  obtener_notas
+  [[ -e "${notas[0]}" ]] || return 1
+}
+
+imprimir_notas(){
+  obtener_notas
+  for i in "${!notas[@]}"; do 
+    nombre=$(basename "${notas[$i]%.md}")
+    echo "$((i+1))) $nombre"
+  done
+}
+
+seleccionar_notas() {
+  validar_notas || { err "No hay notas disponibles."; return 1; }
+  imprimir_notas
+
+  while true; do 
+    read -p "Seleccione una nota por numero: " opt 
+
+    [[ "$opt" =~ ^[0-9]+$ ]] || { err "Numero invalido."; continue; }
+
+    idx=$((opt-1))
+
+    if  (( idx >= 0 && idx < ${#nota[@]} )); then 
+      echo "${notas[$idx]}"
+      return 0 
+    else 
+      err "Numero fuera de rango."
+    fi 
+  done 
+}
+
 pausa(){
   read -p "Presione Enter para continuar... "
 }
@@ -103,59 +140,21 @@ buscar_nota(){
 }
 
 editar_nota(){
-  notas=("$DATA_DIR"/*.md)
-
-  # Validación: si hay notas 
-  if [[ ! -e "${notas[0]}" ]]; then
-    err "No hay notas Disponibles."
-    pause &&
-    continue
-  fi 
-
-  msg "Notas Disponibles:"
-  for i in "${!notas[@]}"; do 
-    nombre=$(basename "${notas[$i]%.md}")
-    echo "$((i+1))) $nombre"
-  done 
-
-  # Pedir sececcion
-  while true; do 
-    read -p "Seleccione una nota por numero: " opt
-
-    # Validación sea numero 
-    [[ "$opt" =~ ^[0-9]+$ ]] || {
-      err "Ingresa un numero valido."
-      pause &&
-      continue
- 
-
-    }
-  # Convertir a indice (0 based)
-  idx=$((opcion-1))
-  
-  # Validación: rango 
-    if (( idx >= 0 && idx < ${#notas[@]} )); then
-    seleccion="${notas[$idx]}"
-  #  msg "Seleccionaste: $(basename "$seleccion")"
-  #  nota_selecionada="$seleccion"
-  #fi 
-
-  #if [ -f "$idx" ]; then 
+  #clear
+  seleccion=$(seleccionar_notas) || return 1 
+   
+  #  Menu de accion
+    clear
     msg "Que desea hacer con  tus notas?"
     echo "1) Ver con glow"
     echo "2) Editar con neovim"
     read -p "Elige una opcion (1/2): " opcion
 
     case $opcion in 
-      1) glow "$notas" ;;
-      2) nvim "$notas" ;;
+      1) glow "$seleccion" ;;
+      2) nvim "$seleccion" ;;
       *) err "Opcion invalida... " ;;
     esac
-  fi
-done
-
-
-
 
 }
 
