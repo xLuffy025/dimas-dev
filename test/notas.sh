@@ -2,6 +2,10 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+DATA_DIR="$HOME/nota"
+
+mkdir -p "$DATA_DIR"
+
 # -------------------------------------------------------
 #       Colores
 # -------------------------------------------------------
@@ -66,23 +70,22 @@ crear_nota() {
     break 
   done
 
-  #validar carpeta 
-  dir="$HOME/nota"
-  filename="$dir/$nota.md"
-  title="$nota"
 
-  # Crear carpeta si no existe 
-  mkdir -p "$dir"
+  FILENAME="$DATA_DIR/$nota.md"
+  TITLE="$nota"
 
+  echo "# $TITLE" > "$FILENAME"
 
-  echo "# $title" > "$filename"
-
-  nvim "$filename"
+  nvim "$FILENAME"
 
 }
 
 lista_notas() {
-  msg "En proceso.."
+  clear
+
+  echo "Notas disponibles:"
+  lsd -1 "$DATA_DIR"/*.md 2>/dev/null
+
 }
 
 buscar_nota(){
