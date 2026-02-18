@@ -111,8 +111,10 @@ cancelar_si_solicita() {
 # --------------------------------------------------------
 crear_nota() {
   while true; do 
-    read -p "Nombre de Titulo: " nota 
-    cancelar_si_solicita "$nota" || return 0
+    read -p "Nombre de Titulo: " texto 
+    cancelar_si_solicita "$texto" || return 0
+
+    nota="${texto// /_}"
 
     # Validación: no vacio
     [[ -z "$nota"  ]] && {
@@ -130,7 +132,7 @@ crear_nota() {
   
   # Validación: existencía previa
     if [[ -f "$HOME/nota/$nota.md" ]]; then
-      err "Aviso: la nota ya existe. No se puede Sobrescribirá.."
+        err "Aviso: la nota ya existe. No se puede Sobrescribirá.."
       pausa && 
       continue
 
@@ -139,7 +141,7 @@ crear_nota() {
     break 
   done
 
-
+  
   FILENAME="$DATA_DIR/$nota.md"
   TITLE="$nota"
   log_info "Nota creada: $nota.md"
@@ -193,7 +195,7 @@ buscar_nota(){
   while true; do 
     read -p "Seleccione una nota por numero: " opt
 
-    [[ "$opt" =~ ^[0-9] ]] || { err "Numero invalido."; continue; }
+    [[ "$opt" =~ ^[0-9]+$ ]] || { err "Numero invalido."; continue; }
 
     idx=$((opt-1))
 
@@ -219,7 +221,7 @@ buscar_nota(){
 }
 
 editar_nota(){
-  seleccionar_notas
+  seleccionar_notas || return 1
 
   #  Menu de accion 
     clear
@@ -238,7 +240,7 @@ editar_nota(){
 
 eliminar_nota(){
   clear
-  seleccionar_notas
+  seleccionar_notas || return 1
 
   if [[ -f "$seleccion" ]]; then 
     read -p "¿Estás seguro de que deseas eliminar '$seleccion'? (s/n): " confirmacion
