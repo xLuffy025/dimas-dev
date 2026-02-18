@@ -3,10 +3,12 @@ set -euo pipefail
 IFS=$'\n\t'
 
 DATA_DIR="$HOME/nota"
-LOG_FILE="$DATA_DIR/notas.log"
+LOG_DIR="$DATA_DIR/logs"
+LOG_FILE="$LOG_DIR/notas.log"
 
 
-mkdir -p "$DATA_DIR"
+mkdir -p "$DATA_DIR" "$LOG_DIR"
+trap 'err "Ocurrió un error inesperado."; exit 1' ERR
 
 # -------------------------------------------------------
 #       Colores
@@ -21,18 +23,19 @@ WHITE="\e[97m"
 RESET="\e[0m"
 
 # -------------------------------------------------------
-#   DEPENDENCIAS
-# -------------------------------------------------------
-command -v nvim >/dev/null || { err "neovim no instalado"; exit 1; }
-command -v glow >/dev/null || { err "glow no instalado"; exit 1; }
-
-# -------------------------------------------------------
 #       Funciones de Mensajes 
 # -------------------------------------------------------
 msg(){ echo -e "${CYAN}==>${RESET} $1"; }
 ok(){ echo -e "${GREEN}[✔️]  ${RESET}  $1"; }
 warn(){ echo -e "${YELLOW} [!]${RESET} $1"; }
 err(){ echo -e "${RED} [✖️]  ${RESET} $1"; } 
+
+# -------------------------------------------------------
+#   DEPENDENCIAS
+# -------------------------------------------------------
+command -v nvim > /dev/null || { err "neovim no instalado"; exit 1; } 
+
+command -v glow >/dev/null || { err  "glow no instalado"; exit 1; }
 
 # --------------------------------------------------------
 #   FUNCIONES GENERALES
@@ -90,9 +93,10 @@ pausa(){
   read -p "Presione Enter para continuar... "
 }
 
-log() {
-  echo "$(date '+%F %T') - Nota creada: $nota" >> "$LOG_FILE"
-
+log_info() {
+  local mensaje="$1"
+  echo "[INFO] $(date '+%F %T') - $mensaje" >> "$LOG_FILE"
+}
 
 cancelar_si_solicita() {
   local valor="$1"
@@ -138,11 +142,11 @@ crear_nota() {
 
   FILENAME="$DATA_DIR/$nota.md"
   TITLE="$nota"
+  log_info "Nota creada: $nota.md"
 
   echo "# $TITLE" > "$FILENAME"
 
   nvim "$FILENAME"
-
 }
 
 lista_notas() {
@@ -155,7 +159,7 @@ lista_notas() {
     nombre=$(basename "${notas[$i]%.md}")
     echo "$((i+1))) $nombre"
   done 
-
+  
 }
 
 buscar_nota(){
@@ -180,7 +184,7 @@ buscar_nota(){
   if (( ${#resultados[@]} == 0 )); then
     warn "No se encontro conincidencias:"
     pausa 
-    continue
+    return 1 
   fi 
 
   echo 
@@ -239,11 +243,18 @@ editar_nota(){
 eliminar_nota(){
   clear
   seleccionar_notas
-  read -p "Deseas eliminar esta nota? (s/n): " c
-  [[  "$c" != "s" ]] &&
-    msg "Cancelar la Eliminacion"
 
-    rm "$seleccion"
+  if [[ -f "$seleccion" ]]; then 
+    read -p "¿Estás seguro de que deseas eliminar '$seleccion'? (s/n): " confirmacion
+    if [[  "$confirmacion" == "s" || "$confirmacion" == "S" ]]; then 
+      rm "$seleccion"
+      msg "El archivo '$seleccion' ha sido eliminado."
+    else 
+      msg " La eliminacion de '$seleccion'  ha sido cancelada."
+    fi 
+  else 
+    msg "El archivo '$seleccion' no existe. "
+  fi 
 
 }
 # --------------------------------------------------------
