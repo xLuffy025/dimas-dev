@@ -153,13 +153,9 @@ lista_notas() {
   clear
 
   obtener_notas
+  msg "Notas disponibles:"
+  imprimir_notas
 
-  echo "Notas:"
-  for i in "${!notas[@]}"; do 
-    nombre=$(basename "${notas[$i]%.md}")
-    echo "$((i+1))) $nombre"
-  done 
-  
 }
 
 buscar_nota(){
@@ -257,6 +253,7 @@ eliminar_nota(){
   fi 
 
 }
+
 # --------------------------------------------------------
 #         Menu Interactivo
 # --------------------------------------------------------
@@ -274,6 +271,19 @@ mostrar_menu() {
   echo
 
 }
+# --------------------------------------------------------
+#   FUNCIONES AUTOMATICAS
+# --------------------------------------------------------
+if [ $# -gt 0 ]; then
+    case $1 in
+        crear) crear_nota ;;
+        listar) lista_notas ;;
+        buscar) buscar_nota ;;
+        eliminar) eliminar_nota ;;
+        *) err "Opción no válida"; exit 1 ;;
+        
+    esac
+else 
 
 while true; do
   mostrar_menu
@@ -284,12 +294,11 @@ while true; do
     3) buscar_nota ;;
     4) editar_nota ;;
     5) eliminar_nota ;;
-    0) echo "Saliendo... "; exit 0 ;;
+    0) msg "Saliendo... "; exit 0 ;;
     *) err "opcion no valida." ;;
-  esac
-  
+  esac 
+
   pausa
 
-done 
-
-    
+done
+fi     
