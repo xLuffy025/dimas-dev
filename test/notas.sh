@@ -3,6 +3,8 @@ set -euo pipefail
 IFS=$'\n\t'
 
 DATA_DIR="$HOME/nota"
+LOG_FILE="$DATA_DIR/notas.log"
+
 
 mkdir -p "$DATA_DIR"
 
@@ -19,6 +21,12 @@ WHITE="\e[97m"
 RESET="\e[0m"
 
 # -------------------------------------------------------
+#   DEPENDENCIAS
+# -------------------------------------------------------
+command -v nvim >/dev/null || { err "neovim no instalado"; exit 1; }
+command -v glow >/dev/null || { err "glow no instalado"; exit 1; }
+
+# -------------------------------------------------------
 #       Funciones de Mensajes 
 # -------------------------------------------------------
 msg(){ echo -e "${CYAN}==>${RESET} $1"; }
@@ -29,46 +37,62 @@ err(){ echo -e "${RED} [✖️]  ${RESET} $1"; }
 # --------------------------------------------------------
 #   FUNCIONES GENERALES
 # --------------------------------------------------------
-obtener_notas(){
-  notas="$DATA_DIR"/*.md
+obtener_notas() { 
+  notas=("$DATA_DIR"/*.md) 
 }
 
-validar_notas(){
-  obtener_notas
-  [[ -e "${notas[0]}" ]] || return 1
+validar_notas() { 
+  obtener_notas 
+  [[ -e "${notas[0]}" ]] || return 1 
 }
 
-imprimir_notas(){
-  obtener_notas
+imprimir_notas() { 
+  obtener_notas 
   for i in "${!notas[@]}"; do 
-    nombre=$(basename "${notas[$i]%.md}")
-    echo "$((i+1))) $nombre"
-  done
-}
-
-seleccionar_notas() {
-  validar_notas || { err "No hay notas disponibles."; return 1; }
-  imprimir_notas
-
-  while true; do 
-    read -p "Seleccione una nota por numero: " opt 
-
-    [[ "$opt" =~ ^[0-9]+$ ]] || { err "Numero invalido."; continue; }
-
-    idx=$((opt-1))
-
-    if  (( idx >= 0 && idx < ${#nota[@]} )); then 
-      echo "${notas[$idx]}"
-      return 0 
-    else 
-      err "Numero fuera de rango."
-    fi 
+    nombre=$(basename "${notas[$i]%.md}") 
+    echo "$((i+1))) $nombre" 
   done 
+}
+seleccionar_notas() {
+  #obtener_notas
+  validar_notas || { err "No hay notas disponibles."; return 1; }
+
+  msg "Notas Disponibles:"
+  imprimir_notas
+  
+  # Pedir sececcion
+  while true; do
+    read -p "Seleccione una nota por numero: " opt
+
+    # Validación sea numero 
+    [[ "$opt" =~ ^[0-9]+$ ]] || {
+      err "Ingresa un numero valido."
+      pausa
+      continue
+ 
+
+    }
+  # Convertir a indice (0 based)
+  idx=$((opt-1))
+  
+  # Validación: rango 
+    if (( idx >= 0 && idx < ${#notas[@]} )); then
+      seleccion="${notas[$idx]}"
+      break 
+    else
+      err "Numero fuera de rango."
+      pausa
+    fi
+  done
 }
 
 pausa(){
   read -p "Presione Enter para continuar... "
 }
+
+log() {
+  echo "$(date '+%F %T') - Nota creada: $nota" >> "$LOG_FILE"
+
 
 cancelar_si_solicita() {
   local valor="$1"
@@ -124,7 +148,7 @@ crear_nota() {
 lista_notas() {
   clear
 
-  notas=("$DATA_DIR"/*.md)
+  obtener_notas
 
   echo "Notas:"
   for i in "${!notas[@]}"; do 
@@ -135,31 +159,91 @@ lista_notas() {
 }
 
 buscar_nota(){
-  msg "En proceso"
+  read -p "Ingresa palabra a buscar: " palabra
 
+  [[ -z "$palabra" ]] && {
+    err "Debes ingresar una palabra."
+    return 1
+  }
+  
+  obtener_notas
+  validar_notas || { err "No hay notas disponibles. "; return 1; }
+
+  resultados=()
+  
+  for archivo in "${notas[@]}"; do 
+    if grep -qi  "$palabra" "$archivo"; then
+      resultados+=("$archivo")
+    fi 
+  done
+
+  if (( ${#resultados[@]} == 0 )); then
+    warn "No se encontro conincidencias:"
+    pausa 
+    continue
+  fi 
+
+  echo 
+  msg "Conincidencias encontrada:"
+  for i in "${!resultados[@]}"; do
+    nombre=$(basename "${resultados[$i]%.md}")
+    echo "$((i+1)) $nombre"
+  done 
+
+  while true; do 
+    read -p "Seleccione una nota por numero: " opt
+
+    [[ "$opt" =~ ^[0-9] ]] || { err "Numero invalido."; continue; }
+
+    idx=$((opt-1))
+
+    if (( idx >= 0 && idx < ${#resultados[@]} )); then 
+      seleccion="${resultados[$idx]}"
+      break 
+    else 
+      err "Numero fuera de rango."
+    fi 
+  done 
+
+  clear
+  msg "Que desea hacer?"
+  echo "1) Ver con glow"
+  echo "2) Editar con neovim"
+  read -p "Elija una opcion: " opcion
+
+  case $opcion in 
+    1) glow "$seleccion" ;;
+    2) nvim "$seleccion" ;;
+    *) err "Opcion invalida." ;;
+  esac 
 }
 
 editar_nota(){
-  #clear
-  seleccion=$(seleccionar_notas) || return 1 
-   
-  #  Menu de accion
+  seleccionar_notas
+
+  #  Menu de accion 
     clear
     msg "Que desea hacer con  tus notas?"
     echo "1) Ver con glow"
     echo "2) Editar con neovim"
     read -p "Elige una opcion (1/2): " opcion
+    clear
 
     case $opcion in 
       1) glow "$seleccion" ;;
       2) nvim "$seleccion" ;;
       *) err "Opcion invalida... " ;;
     esac
-
 }
 
 eliminar_nota(){
-  msg "En proceso"
+  clear
+  seleccionar_notas
+  read -p "Deseas eliminar esta nota? (s/n): " c
+  [[  "$c" != "s" ]] &&
+    msg "Cancelar la Eliminacion"
+
+    rm "$seleccion"
 
 }
 # --------------------------------------------------------
@@ -193,7 +277,7 @@ while true; do
     *) err "opcion no valida." ;;
   esac
   
-  read -p "Presione Enter para continuar..."
+  pausa
 
 done 
 
