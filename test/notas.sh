@@ -161,6 +161,8 @@ lista_notas() {
 }
 
 buscar_nota(){
+  local notas 
+
   read -p "Ingresa palabra a buscar: " palabra
 
   [[ -z "$palabra" ]] && {
