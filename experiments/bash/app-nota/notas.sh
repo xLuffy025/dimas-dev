@@ -25,7 +25,7 @@ RESET="\e[0m"
 # -------------------------------------------------------
 #       Funciones de Mensajes 
 # -------------------------------------------------------
-msg(){ echo -e "${CYAN}==>${RESET} $1"; }
+msg(){ pintf "%b\n" "${CYAN}==>${RESET} $1"; }
 ok(){ echo -e "${GREEN}[✔️]  ${RESET}  $1"; }
 warn(){ echo -e "${YELLOW} [!]${RESET} $1"; }
 err(){ echo -e "${RED} [✖️]  ${RESET} $1"; } 
@@ -46,7 +46,10 @@ obtener_notas() {
 
 validar_notas() { 
   obtener_notas 
-  [[ -e "${notas[0]}" ]] || return 1 
+
+  if [[ ${#notas[@]} -eq 0 ]] || [[ ! -e "$notas[0]" ]]; then
+    return 1 
+  fi
 }
 
 imprimir_notas() { 
@@ -114,7 +117,7 @@ crear_nota() {
     read -p "Nombre de Titulo: " texto 
     cancelar_si_solicita "$texto" || return 0
 
-    nota="${texto// /_}"
+    local nota="${texto// /_}"
 
     # Validación: no vacio
     [[ -z "$nota"  ]] && {
