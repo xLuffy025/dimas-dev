@@ -2,13 +2,17 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# Directorios y archivos por defecto
 DATA_DIR="${DATA_DIR:-$HOME/dimas-dev/nota}"
 LOG_DIR="${LOG_DIR:-$DATA_DIR/logs}"
 LOG_FILE="${LOG_FILE:-$LOG_DIR/notas.log}"
+TRASH_DIR="$DATA_DIR/.trash"
 
-mkdir -p "$DATA_DIR" "$LOG_DIR"
+mkdir -p "$DATA_DIR" "$LOG_DIR" "$TRASH_DIR"
 
-trap 'err "Ocurrió un error inesperado."; exit 1' ERR
+# Debug: track last command for better ERR reporting
+#trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
+#trap 'err "El comando \"${last_command:-unknown}\" falló."; exit 1' ERR
 
 # -------------------------------------------------------
 #       Colores
@@ -25,85 +29,96 @@ RESET="\e[0m"
 # -------------------------------------------------------
 #       Funciones de Mensajes 
 # -------------------------------------------------------
-msg(){ echo -e "${CYAN}==>${RESET} $1"; }
-ok(){ echo -e "${GREEN}[✔️]  ${RESET}  $1"; }
-warn(){ echo -e "${YELLOW} [!]${RESET} $1"; }
-err(){ echo -e "${RED} [✖️]  ${RESET} $1"; } 
+msg(){ printf "%b==>%b %s\n" "$CYAN" "$RESET" "$1"; }
+ok(){ printf "%b[✔️]  %b %s\n" "$GREEN" "$RESET" "$1"; }
+warn(){ printf "%b[!]%b %s\n" "$YELLOW" "$RESET" "$1"; }
+err(){ printf "%b[✖️]  %b %s\n" "$RED" "$RESET" "$1"; } 
 
 # -------------------------------------------------------
-#   DEPENDENCIAS
+#   DEPENDENCIAS / EDITOR / GLOW
 # -------------------------------------------------------
-command -v nvim > /dev/null || { err "neovim no instalado"; exit 1; } 
+# Selección de editor: usa $EDITOR si está definido, si no busca nvim/vim/nano
+choose_editor() {
+  if [[ -n "${EDITOR-}" ]] && command -v "${EDITOR}" >/dev/null 2>&1; then
+    printf '%s' "${EDITOR}"
+    return
+  fi
+  for e in nvim vim nano; do
+    if command -v "$e" >/dev/null 2>&1; then
+      printf '%s' "$e"
+      return
+    fi
+  done
+  # Si no hay editor disponible, salimos con error
+  err "No se encontró un editor (neovim/vim/nano). Exporta \$EDITOR o instala uno."
+  exit 1
+}
 
-command -v glow >/dev/null || { err  "glow no instalado"; exit 1; }
+EDITOR_CMD="$(choose_editor)"
+
+if command -v glow >/dev/null 2>&1; then
+  HAVE_GLOW=1
+else
+  HAVE_GLOW=0
+  warn "glow no instalado; se usará 'less' como fallback para ver notas."
+fi
 
 # --------------------------------------------------------
 #   FUNCIONES GENERALES
 # --------------------------------------------------------
+# NOTAS: array global con rutas a archivos .md
 obtener_notas() {
   shopt -s nullglob
-  notas=("$DATA_DIR"/*.md)
+  mapfile -t NOTAS < <(printf '%s\n' "$DATA_DIR"/*.md 2>/dev/null | sort -V)
   shopt -u nullglob
 }
 
 validar_notas() { 
-  obtener_notas 
-  [[ -e "${notas[0]}" ]] || return 1 
+  obtener_notas
+  [[ ${#NOTAS[@]} -gt 0 ]] || return 1 
 }
 
 imprimir_notas() { 
-  obtener_notas 
-  for i in "${!notas[@]}"; do 
-    nombre=$(basename "${notas[$i]%.md}") 
-    echo "$((i+1))) $nombre" 
+  for i in "${!NOTAS[@]}"; do 
+    nombre=$(basename "${NOTAS[$i]%.md}") 
+    printf "%s) %s\n" "$((i+1))" "$nombre"
   done 
 }
+
 seleccionar_notas() {
-  #obtener_notas
   validar_notas || { err "No hay notas disponibles."; return 1; }
 
-  msg "Notas Disponibles:"
+  msg "Notas disponibles:"
   imprimir_notas
   
-  # Pedir sececcion
   while true; do
-    if ! read -r -p "Seleccione una nota por numero: " opt; then
+    if ! read -r -p "Seleccione una nota por número (0 para cancelar): " opt; then
       return 1
     fi
 
-    #cancelar_si_solicita "$opt" || return 0
+    cancelar_si_solicita "$opt" || return 0
 
-    # Validación sea numero 
-    [[ "$opt" =~ ^[0-9]+$ ]] || {
-      err "Ingresa un numero valido."
-      pausa
-      continue
- 
+    [[ "$opt" =~ ^[0-9]+$ ]] || { err "Ingresa un número válido."; pausa; continue; }
 
-    }
-  # Convertir a indice (0 based)
-  idx=$((opt-1))
-  
-  # Validación: rango 
-    if (( idx >= 0 && idx < ${#notas[@]} )); then
-      seleccion="${notas[$idx]}"
-      break 
+    idx=$((opt-1))
+    if (( idx >= 0 && idx < ${#NOTAS[@]} )); then
+      seleccion="${NOTAS[$idx]}"
+      break
     else
-      err "Numero fuera de rango."
+      err "Número fuera de rango."
       pausa
     fi
   done
 }
 
 pausa(){
-  read -r -p "Presione Enter para continuar... "
+  read -r -p "Presione Enter para continuar... " _ || true
 }
 
 log_info() {
   local mensaje="$1"
-  if ! echo "[INFO] $(date '+%F %T') - $mensaje" >> "$LOG_FILE"; then
-    warn "No se pudo escribir en el log."
-  fi
+  printf '[INFO] %s - %s\n' "$(date '+%F %T')" "$mensaje" >> "$LOG_FILE" || \
+    warn "No se pudo escribir en el log: $LOG_FILE"
 }
 
 cancelar_si_solicita() {
@@ -119,34 +134,36 @@ cancelar_si_solicita() {
 # --------------------------------------------------------
 crear_nota() {
   while true; do 
-    if ! read -r -p "Nombre de Titulo (0) para cancelar: " texto; then
+    if ! read -r -p "Nombre de Título (0 para cancelar): " texto; then
       return 1
     fi 
     cancelar_si_solicita "$texto" || return 0
 
+    # trim (quitar espacios al inicio/fin)
     texto="${texto#"${texto%%[![:space:]]*}"}"
     texto="${texto%"${texto##*[![:space:]]}"}"
 
-    
-    # Validación: no vacio
-    [[ -z "$texto" ]] && { err "El título no puede estar vacío."; pausa; continue; }
-    
+    [[ -z "$texto"  ]] && {
+      err "El título no puede estar vacío."
+      pausa
+      continue
+    }
+
+    # Normalizar espacios a guiones bajos y eliminar caracteres no permitidos
     nota="${texto// /_}"
 
-    # Validación: caracteres permitidos
-    [[ ! "$nota" =~ ^[A-Za-z0-9_-]+$ ]] && { err "Solo permite letras, números, guiones _ y -"; pausa; continue; }
-
-    if [[ -f "$DATA_DIR/$nota.md" ]]; then
-      err "Aviso: la nota ya existe. No se puede sobrescribir."; pausa; continue
-    fi 
-    break
-
-    # Validación: existencía previa
+    # Validación: caracteres permitidos (letras, números, _ y -)
+    if [[ ! "$nota" =~ ^[A-Za-z0-9_-]+$ ]]; then
+      err "El título solo permite letras, números, guión bajo y guión medio."
+      pausa
+      continue
+    fi
+  
+    # Validación: existencia previa
     if [[ -f "$DATA_DIR/$nota.md" ]]; then
       err "Aviso: la nota ya existe. No se puede sobrescribir."
-      pausa && 
+      pausa
       continue
-
     fi 
 
     break 
@@ -154,49 +171,41 @@ crear_nota() {
 
   
   local FILENAME="$DATA_DIR/$nota.md"
-  local TITLE="$nota"
+  local TITLE="$texto"
+  printf "# %s\n\n" "$TITLE" > "$FILENAME"
   log_info "Nota creada: $nota.md"
 
-  echo "# $TITLE" > "$FILENAME"
-
-  nvim "$FILENAME"
+  "$EDITOR_CMD" "$FILENAME"
 }
 
 lista_notas() {
   clear
-
   validar_notas || { err "No hay notas disponibles."; return 1; }
   msg "Notas disponibles:"
   imprimir_notas
-
 }
 
 buscar_nota(){
-  local notas
   local palabra
-  local resultados
-  local seleccion
-  local idx
-  local opt
+  local resultados=()
+  local idx opt seleccion_local
 
-  if ! read -r -p "Ingresa palabra a buscar (0) para cancelar: " palabra; then
+  if ! read -r -p "Ingresa palabra a buscar (0 para cancelar): " palabra; then
     return 1
   fi
 
   cancelar_si_solicita "$palabra" || return 0
 
-  [[ -z "$palabra" ]] && {
-    err "Debes ingresar una palabra."
-    return 1
-  }
+  palabra="${palabra#"${palabra%%[![:space:]]*}"}"
+  palabra="${palabra%"${palabra##*[![:space:]]}"}"
+
+  [[ -z "$palabra" ]] && { err "Debes ingresar una palabra."; return 1; }
   
   obtener_notas
-  validar_notas || { err "No hay notas disponibles. "; return 1; }
+  validar_notas || { err "No hay notas disponibles."; return 1; }
 
-  resultados=()
-  
-  for archivo in "${notas[@]}"; do 
-    if grep -Fqi  "$palabra" "$archivo"; then
+  for archivo in "${NOTAS[@]}"; do 
+    if grep -Fqi -- "$palabra" "$archivo"; then
       resultados+=("$archivo")
     fi 
   done
@@ -211,59 +220,72 @@ buscar_nota(){
   msg "Coincidencias encontradas:"
   for i in "${!resultados[@]}"; do
     nombre=$(basename "${resultados[$i]%.md}")
-    echo "$((i+1)) $nombre"
+    printf "%s) %s\n" "$((i+1))" "$nombre"
   done 
 
   while true; do
-    if ! read -r -p "Seleccione una nota por numero (0) para cancelar: " opt; then
+    if ! read -r -p "Seleccione una nota por número (0 para cancelar): " opt; then
       return 1
     fi
 
     cancelar_si_solicita "$opt" || return 0
 
-    [[ "$opt" =~ ^[0-9]+$ ]] || { err "Numero invalido."; continue; }
+    [[ "$opt" =~ ^[0-9]+$ ]] || { err "Número inválido."; continue; }
 
     idx=$((opt-1))
 
     if (( idx >= 0 && idx < ${#resultados[@]} )); then 
-      seleccion="${resultados[$idx]}"
+      seleccion_local="${resultados[$idx]}"
       break 
     else 
-      err "Numero fuera de rango."
+      err "Número fuera de rango."
     fi 
   done 
 
   clear
-  msg "Que desea hacer (0) para cancelar?"
-  echo "1) Ver con glow"
-  echo "2) Editar con neovim"
-  read -r -p "Elija una opcion: " opcion
+  msg "¿Qué desea hacer?"
+  echo "1) Ver (preview) con glow/less"
+  echo "2) Editar con $EDITOR_CMD"
+  read -r -p "Elija una opción: " opcion
   cancelar_si_solicita "$opcion" || return 0
   
   case $opcion in 
-    1) glow "$seleccion" ;;
-    2) nvim "$seleccion" ;;
-    *) err "Opcion invalida." ;;
+    1)
+      # Mostrar líneas donde aparece la palabra y luego abrir con glow/less
+      printf "\n%s\n\n" "$(grep -n --color=always -i -- "$palabra" "$seleccion_local" | sed -n '1,20p')"
+      if (( HAVE_GLOW )); then
+        glow "$seleccion_local"
+      else
+        less -R "$seleccion_local"
+      fi
+      ;;
+    2) "$EDITOR_CMD" "$seleccion_local" ;;
+    *) err "Opción inválida." ;;
   esac 
 }
 
 editar_nota(){
   seleccionar_notas || return 1
 
-  #  Menu de accion 
-    clear
-    msg "Que desea hacer con  tus notas?"
-    echo "1) Ver con glow"
-    echo "2) Editar con neovim"
-    read -r -p "Elige una opcion (1/2): " opcion
-    cancelar_si_solicita "$opcion" || return 0
-    clear
+  clear
+  msg "¿Qué desea hacer con la nota?"
+  echo "1) Ver con glow/less"
+  echo "2) Editar con $EDITOR_CMD"
+  read -r -p "Elige una opción (1/2, 0 para cancelar): " opcion
+  cancelar_si_solicita "$opcion" || return 0
+  clear
 
-    case $opcion in 
-      1) glow "$seleccion" ;;
-      2) nvim "$seleccion" ;;
-      *) err "Opcion invalida... " ;;
-    esac
+  case $opcion in 
+    1)
+      if (( HAVE_GLOW )); then
+        glow "$seleccion"
+      else
+        less -R "$seleccion"
+      fi
+      ;;
+    2) "$EDITOR_CMD" "$seleccion" ;;
+    *) err "Opción inválida." ;;
+  esac
 }
 
 eliminar_nota(){
@@ -275,36 +297,39 @@ eliminar_nota(){
     nombre=$(basename "$seleccion")
     read -r -p "¿Estás seguro de que deseas eliminar '$nombre'? (s/n): " confirmacion
     if [[  "$confirmacion" == "s" || "$confirmacion" == "S" ]]; then 
-      rm "$seleccion"
-      msg "El archivo '$nombre' ha sido eliminado."
+      mkdir -p "$TRASH_DIR"
+      mv "$seleccion" "$TRASH_DIR/" && {
+        log_info "Nota movida a la papelera: $nombre"
+        msg "El archivo '$nombre' ha sido movido a la papelera ($TRASH_DIR)."
+      } || {
+        err "No se pudo mover '$nombre' a la papelera."
+      }
     else
-      msg "La eliminacion de '$nombre' ha sido cancelada."
+      msg "La eliminación de '$nombre' ha sido cancelada."
     fi 
   else 
-    msg "El archivo no existe. "
+    msg "El archivo no existe."
   fi 
-
 }
 
 # --------------------------------------------------------
-#         Menu Interactivo
+#         Menú Interactivo
 # --------------------------------------------------------
 mostrar_menu() {
   clear 
-  echo -e "${CYAN}==============================${RESET}"
-  echo -e "${CYAN} 🚀 Notas Mackdown      ${RESET}"
-  echo -e "${CYAN}==============================${RESET}"
-  echo -e "${YELLOW}1)${RESET} Crear Nota" 
-  echo -e "${YELLOW}2)${RESET} Listar Notas"
-  echo -e "${YELLOW}3)${RESET} Buscar por palabra"
-  echo -e "${YELLOW}4)${RESET} Editar Nota"
-  echo -e "${YELLOW}5)${RESET} Eliminar nota"
-  echo -e "${YELLOW}0)${RESET} Salir"
-  echo
-
+  printf "%b==============================%b\n" "$CYAN" "$RESET"
+  printf "%b 🚀 Notas Markdown %b\n" "$CYAN" "$RESET"
+  printf "%b==============================%b\n\n" "$CYAN" "$RESET"
+  printf "%b1)%b Crear Nota\n" "$YELLOW" "$RESET"
+  printf "%b2)%b Listar Notas\n" "$YELLOW" "$RESET"
+  printf "%b3)%b Buscar por palabra\n" "$YELLOW" "$RESET"
+  printf "%b4)%b Editar Nota\n" "$YELLOW" "$RESET"
+  printf "%b5)%b Eliminar nota\n" "$YELLOW" "$RESET"
+  printf "%b0)%b Salir\n\n" "$YELLOW" "$RESET"
 }
+
 # --------------------------------------------------------
-#   FUNCIONES AUTOMATICAS
+#   FUNCIONES AUTOMATICAS / CLI
 # --------------------------------------------------------
 if [ $# -gt 0 ]; then
     case $1 in
@@ -314,24 +339,20 @@ if [ $# -gt 0 ]; then
         editar) editar_nota ;;
         eliminar) eliminar_nota ;;
         *) err "Opción no válida"; exit 1 ;;
-        
     esac
 else 
-
-while true; do
-  mostrar_menu
-  read -p "Seleccione una opcion: " opt 
-  case $opt in
-    1) crear_nota ;;
-    2) lista_notas ;;
-    3) buscar_nota ;;
-    4) editar_nota ;;
-    5) eliminar_nota ;;
-    0) msg "Saliendo... "; exit 0 ;;
-    *) err "opcion no valida." ;;
-  esac 
-
-  pausa
-
-done
-fi     
+  while true; do
+    mostrar_menu
+    read -r -p "Seleccione una opción: " opt 
+    case $opt in
+      1) crear_nota ;;
+      2) lista_notas ;;
+      3) buscar_nota ;;
+      4) editar_nota ;;
+      5) eliminar_nota ;;
+      0) msg "Saliendo... "; exit 0 ;;
+      *) err "Opción no válida." ;;
+    esac 
+    pausa
+  done
+fi
