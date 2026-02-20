@@ -7,6 +7,8 @@ IFS=$'\n\t'
 # Se procesa antes de la dispatch principal (shifteamos args)
 # -------------------------------------------------------
 # Si se activa el modo debug, mostramos aviso y activamos tracing.
+DEBUG=0 
+
 if (( DEBUG )); then
   msg "Modo debug activado"
   set -x
