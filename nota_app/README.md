@@ -1,4 +1,4 @@
-# app-nota (experiments/bash/app-nota)
+# nota_app (nota_app)
 
 Pequeña utilidad de notas en Markdown para aprendizaje personal.
 
@@ -19,30 +19,30 @@ Uso:
   ./dimas-dev/nota_app/notas.sh editar
   ./dimas-dev/nota_app/notas.sh elimina
 - Modo debug (trazado):
-  ./experiments/bash/app-nota/notas.sh eliminar
   ./dimas-dev/nota_app/notas.sh --debug crear
   o
   ./dimas-dev/nota_app/notas.sh -d listar
 
-Slug / títulos:
-- Si `iconv` está instalado, el script translitera acentos (´á → a´, ñ→n) y crea un slug ASCII seguro.
-- Si `iconv` no está disponible, el script reemplaza espacios por `_`, elimina `/` y conserva caracteres UTF-8 (advertencia mostrada).
-
-Pruebas manuales sugeridas:
+Pruebas manuales sugeridas
 1. Crear nota con acentos:
-   - crear -> título: "Prueba acción ñ"
-   - Ver que exista `DATA_DIR/prueba_accion_n.md` (o similar) y que el contenido tenga el título original al inicio.
-2. Buscar:
-   - buscar -> introducir palabra que exista dentro de la nota (p. ej. "acción") y verificar preview.
-3. Editar:
-   - editar -> seleccionar la nota -> ver/editar con editor.
-4. Eliminar:
-   - eliminar -> seleccionar -> confirmar -> comprobar que el archivo esté en `.trash`.
-5. Debug:
-   - Ejecutar con `--debug` y reprobar un flujo que antes daba problemas para ver la traza completa.
+   - `crear` -> título: "Prueba acción ñ"
+   - Ver que exista `DATA_DIR/prueba_accion_n.md` (o similar) y que el contenido tenga el título original.
 
-Logs:
+2. Buscar:
+   - `buscar` -> introducir palabra que exista (p. ej. "acción") y verificar preview.
+
+3. Editar:
+   - `editar` -> seleccionar la nota -> ver/editar con editor.
+
+4. Eliminar:
+   - `eliminar` -> seleccionar -> confirmar -> comprobar que el archivo esté en `.trash`.
+
+5. Debug:
+   - Ejecutar con `--debug` y repetir un flujo para ver la traza completa.
+
+Logs
 - `LOG_FILE` por defecto: `$HOME/dimas-dev/nota/logs/notas.log`
 
-Notas:
-- Recomiendo instalar `iconv` (paquetes libc-bin/libiconv según distro) y `glow` para mejor experiencia.
+Recomendaciones
+- Instala `iconv` para mejor transliteración y `glow` para mejor preview.
+- Ejecuta `shellcheck` localmente (o usa el workflow) para mantener calidad.
