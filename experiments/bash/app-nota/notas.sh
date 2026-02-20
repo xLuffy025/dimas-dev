@@ -2,22 +2,16 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# -------------------------------------------------------
-#     CONFIGURACION INICIAL
-# -------------------------------------------------------
-DATA_DIR="${DATA_DIR:-$HOME/nota}"
-LOG_DIR="${LOG_DIR:-$DATA_DIR/logs}"
-LOG_FILE="${LOG_FILE:-$LOG_DIR/notas.log}"
+DATA_DIR="$HOME/nota"
+LOG_DIR="$DATA_DIR/logs"
+LOG_FILE="$LOG_DIR/notas.log"
 
 
 mkdir -p "$DATA_DIR" "$LOG_DIR"
-# -------------------------------------------------------
-#     TRAPS
-# -------------------------------------------------------
-trap 'err "Error en linea $LINENO"; exit 1' ERR
+trap 'err "Ocurrió un error inesperado."; exit 1' ERR
 
 # -------------------------------------------------------
-#     COLORES
+#       Colores
 # -------------------------------------------------------
 GREEN="\e[32m"
 YELLOW="\e[33m"
@@ -29,35 +23,30 @@ WHITE="\e[97m"
 RESET="\e[0m"
 
 # -------------------------------------------------------
-#       FUNCIONES DE MENSAJES
+#       Funciones de Mensajes 
 # -------------------------------------------------------
-msg(){ printf "%b\n" "${CYAN}==>${RESET} $1"; }
+msg(){ echo -e "${CYAN}==>${RESET} $1"; }
 ok(){ echo -e "${GREEN}[✔️]  ${RESET}  $1"; }
 warn(){ echo -e "${YELLOW} [!]${RESET} $1"; }
 err(){ echo -e "${RED} [✖️]  ${RESET} $1"; } 
 
 # -------------------------------------------------------
-#       DEPENDENCIAS
+#   DEPENDENCIAS
 # -------------------------------------------------------
 command -v nvim > /dev/null || { err "neovim no instalado"; exit 1; } 
 
 command -v glow >/dev/null || { err  "glow no instalado"; exit 1; }
 
 # --------------------------------------------------------
-#       FUNCIONES GENERALES
+#   FUNCIONES GENERALES
 # --------------------------------------------------------
 obtener_notas() { 
-  shopt -s nullglob
   notas=("$DATA_DIR"/*.md) 
-  shopt -u nullglob
 }
 
 validar_notas() { 
   obtener_notas 
-
-  if [[ ${#notas[@]} -eq 0 ]] || [[ ! -e "$notas[0]" ]]; then
-    return 1 
-  fi
+  [[ -e "${notas[0]}" ]] || return 1 
 }
 
 imprimir_notas() { 
@@ -74,10 +63,9 @@ seleccionar_notas() {
   msg "Notas Disponibles:"
   imprimir_notas
   
-  while true; do 
-    if ! read -r -p "Seleccione una nota por número: " opt; then 
-      return 1 
-    fi 
+  # Pedir sececcion
+  while true; do
+    read -p "Seleccione una nota por numero: " opt
 
     # Validación sea numero 
     [[ "$opt" =~ ^[0-9]+$ ]] || {
@@ -102,14 +90,12 @@ seleccionar_notas() {
 }
 
 pausa(){
-  read -r -p "Presione Enter para continuar... "
+  read -p "Presione Enter para continuar... "
 }
 
 log_info() {
   local mensaje="$1"
-  if ! echo "[INFO] $(date '+%F %T') - $mensaje" >> "$LOG_FILE"; then
-    warn "No se pudo escribir en el log."
-  fi
+  echo "[INFO] $(date '+%F %T') - $mensaje" >> "$LOG_FILE"
 }
 
 cancelar_si_solicita() {
@@ -125,13 +111,10 @@ cancelar_si_solicita() {
 # --------------------------------------------------------
 crear_nota() {
   while true; do 
-    if ! read -r -p "Nombre de Titulo: " texto; then
-      return 1 
-    fi
-    
+    read -p "Nombre de Titulo: " texto 
     cancelar_si_solicita "$texto" || return 0
 
-    local nota="${texto// /_}"
+    nota="${texto// /_}"
 
     # Validación: no vacio
     [[ -z "$nota"  ]] && {
@@ -148,8 +131,8 @@ crear_nota() {
     }
   
   # Validación: existencía previa
-    if [[ -f "$DATA_DIR/$nota.md" ]]; then
-      err "Aviso: la nota ya existe. No se puede Sobrescribirá.."
+    if [[ -f "$HOME/nota/$nota.md" ]]; then
+        err "Aviso: la nota ya existe. No se puede Sobrescribirá.."
       pausa && 
       continue
 
@@ -157,9 +140,10 @@ crear_nota() {
 
     break 
   done
+
   
-  local FILENAME="$DATA_DIR/$nota.md"
-  local TITLE="$nota"
+  FILENAME="$DATA_DIR/$nota.md"
+  TITLE="$nota"
   log_info "Nota creada: $nota.md"
 
   echo "# $TITLE" > "$FILENAME"
@@ -171,23 +155,15 @@ lista_notas() {
   clear
 
   obtener_notas
-  #validar_notas || { err "No hay notas disponibles."; return 1; }
   msg "Notas disponibles:"
   imprimir_notas
 
 }
 
 buscar_nota(){
-  local notas
-  local palabras 
-  local resultados
-  local seleccion
-  local idx
-  local opt
+  local notas 
 
-  if ! read -r -p "Ingresa palabra a buscar: " palabra; then
-    return 1 
-  fi
+  read -p "Ingresa palabra a buscar: " palabra
 
   [[ -z "$palabra" ]] && {
     err "Debes ingresar una palabra."
@@ -200,28 +176,26 @@ buscar_nota(){
   resultados=()
   
   for archivo in "${notas[@]}"; do 
-    if grep -Fqi  "$palabra" "$archivo"; then
+    if grep -qi  "$palabra" "$archivo"; then
       resultados+=("$archivo")
     fi 
   done
 
   if (( ${#resultados[@]} == 0 )); then
-    warn "No se encontraron coincidencia:"
+    warn "No se encontro conincidencias:"
     pausa 
     return 1 
   fi 
 
   echo 
-  msg "Coincidencias encontrada:"
+  msg "Conincidencias encontrada:"
   for i in "${!resultados[@]}"; do
     nombre=$(basename "${resultados[$i]%.md}")
     echo "$((i+1)) $nombre"
   done 
 
   while true; do 
-    if ! read -r -p "Seleccione una nota por numero: " opt; then 
-      return 1 
-    fi
+    read -p "Seleccione una nota por numero: " opt
 
     [[ "$opt" =~ ^[0-9]+$ ]] || { err "Numero invalido."; continue; }
 
@@ -239,7 +213,7 @@ buscar_nota(){
   msg "Que desea hacer?"
   echo "1) Ver con glow"
   echo "2) Editar con neovim"
-  read -r -p "Elija una opcion: " opcion
+  read -p "Elija una opcion: " opcion
 
   case $opcion in 
     1) glow "$seleccion" ;;
@@ -256,7 +230,7 @@ editar_nota(){
     msg "Que desea hacer con  tus notas?"
     echo "1) Ver con glow"
     echo "2) Editar con neovim"
-    read -r -p "Elige una opcion (1/2): " opcion
+    read -p "Elige una opcion (1/2): " opcion
     clear
 
     case $opcion in 
@@ -270,18 +244,16 @@ eliminar_nota(){
   clear
   seleccionar_notas || return 1
 
-  if [[ -f "$seleccion" ]]; then
-    local nombre 
-    nombre=$(basename "$seleccion")
-    read -r -p "¿Estás seguro de que deseas eliminar '$seleccion'? (s/n): " confirmacion
+  if [[ -f "$seleccion" ]]; then 
+    read -p "¿Estás seguro de que deseas eliminar '$seleccion'? (s/n): " confirmacion
     if [[  "$confirmacion" == "s" || "$confirmacion" == "S" ]]; then 
       rm "$seleccion"
-      msg "El archivo '$nombre' ha sido eliminado."
+      msg "El archivo '$seleccion' ha sido eliminado."
     else 
-      msg " La eliminacion de '$nombre'  ha sido cancelada."
+      msg " La eliminacion de '$seleccion'  ha sido cancelada."
     fi 
   else 
-    msg "El archivo no existe. "
+    msg "El archivo '$seleccion' no existe. "
   fi 
 
 }
@@ -292,7 +264,7 @@ eliminar_nota(){
 mostrar_menu() {
   clear 
   echo -e "${CYAN}==============================${RESET}"
-  echo -e "${CYAN} 🚀 Notas Markdown     ${RESET}"
+  echo -e "${CYAN} 🚀 Notas Mackdown      ${RESET}"
   echo -e "${CYAN}==============================${RESET}"
   echo -e "${YELLOW}1)${RESET} Crear Nota" 
   echo -e "${YELLOW}2)${RESET} Listar Notas"
@@ -303,7 +275,6 @@ mostrar_menu() {
   echo
 
 }
-
 # --------------------------------------------------------
 #   FUNCIONES AUTOMATICAS
 # --------------------------------------------------------
@@ -312,7 +283,6 @@ if [ $# -gt 0 ]; then
         crear) crear_nota ;;
         listar) lista_notas ;;
         buscar) buscar_nota ;;
-        editar) editar_nota ;;
         eliminar) eliminar_nota ;;
         *) err "Opción no válida"; exit 1 ;;
         
