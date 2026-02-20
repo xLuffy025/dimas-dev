@@ -124,23 +124,24 @@ crear_nota() {
     fi 
     cancelar_si_solicita "$texto" || return 0
 
+    texto="${texto#"${texto%%[![:space:]]*}"}"
+    texto="${texto%"${texto##*[![:space:]]}"}"
+
+    
+    # Validación: no vacio
+    [[ -z "$texto" ]] && { err "El título no puede estar vacío."; pausa; continue; }
+    
     nota="${texto// /_}"
 
-    # Validación: no vacio
-    [[ -z "$nota"  ]] && {
-      err "El Titulo no puede estar vacío." &&
-      pausa &&
-    continue
-    }
+    # Validación: caracteres permitidos
+    [[ ! "$nota" =~ ^[A-Za-z0-9_-]+$ ]] && { err "Solo permite letras, números, guiones _ y -"; pausa; continue; }
 
-  # Validación: caracteres permitidos
-    [[ ! "$nota" =~ ^[A-Za-z0-9_]+$ ]] && {
-    err "Solo permite letras, número y _ ... " &&
-    pausa &&
-    continue
-    }
-  
-  # Validación: existencía previa
+    if [[ -f "$DATA_DIR/$nota.md" ]]; then
+      err "Aviso: la nota ya existe. No se puede sobrescribir."; pausa; continue
+    fi 
+    break
+
+    # Validación: existencía previa
     if [[ -f "$DATA_DIR/$nota.md" ]]; then
       err "Aviso: la nota ya existe. No se puede sobrescribir."
       pausa && 
