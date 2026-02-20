@@ -11,8 +11,11 @@ TRASH_DIR="$DATA_DIR/.trash"
 mkdir -p "$DATA_DIR" "$LOG_DIR" "$TRASH_DIR"
 
 # Debug: track last command for better ERR reporting
-#trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
-#trap 'err "El comando \"${last_command:-unknown}\" falló."; exit 1' ERR
+current_command=''
+last_command=''
+
+trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
+trap 'err "El comando \"${last_command:-unknown}\" falló."; exit 1' ERR
 
 # -------------------------------------------------------
 #       Colores
@@ -96,7 +99,7 @@ seleccionar_notas() {
       return 1
     fi
 
-    cancelar_si_solicita "$opt" || return 0
+    cancelar_si_solicita "$opt" || return 1
 
     [[ "$opt" =~ ^[0-9]+$ ]] || { err "Ingresa un número válido."; pausa; continue; }
 
@@ -265,7 +268,8 @@ buscar_nota(){
 }
 
 editar_nota(){
-  seleccionar_notas || return 1
+  if ! seleccionar_notas; then return 0; fi
+  #seleccionar_notas || return 1
 
   clear
   msg "¿Qué desea hacer con la nota?"
