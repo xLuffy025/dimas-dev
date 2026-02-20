@@ -77,7 +77,6 @@ instalar_vim_nvim(){
 
 instalar_tmux(){
   msg "Instalando Tmux..."
-  source "$SCRIPT_DIR/env.sh"
   if [ -f "configs/.tmux.conf" ]; then
     cp configs/.tmux.conf ~/.tmux.conf
     ok "Archivo .tmux.conf instalado."
@@ -159,7 +158,7 @@ mostrar_menu() {
 
 while true; do
   mostrar_menu
-  read -p "Selecciona una opción: " opt
+  read -r -p "Selecciona una opción: " opt
   case $opt in
     1) instalar_basicos ;;
     2) instalar_zsh ;;
@@ -173,5 +172,5 @@ while true; do
     0) echo "Saliendo..."; exit 0 ;;
     *) err "Opción no válida." ;;
   esac
-  read -p "Presiona Enter para continuar..."
+  read -r -p "Presiona Enter para continuar..."
 done

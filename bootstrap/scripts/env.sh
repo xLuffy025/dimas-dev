@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Universal environment detector — Termux / Proot / Linux
 # Autor: xLuffy025 (versión refinada)
-set -euo pipefail
-IFS=$'\n\t'
 
+set -u
 
 # ==== Detect TERMUX ====
 detect_termux() {
@@ -52,7 +51,7 @@ detect_pkgmgr() {
       echo "unknown"
       ;;
   esac
- 
+}
 
 # ==== Detect USER privilege ====
 if [ "$(id -u)" -eq 0 ]; then
@@ -88,5 +87,5 @@ if [ -t 1 ]; then
   echo -e "🐧 Distro: ${OS_ID:-N/A}"
   echo -e "📦 Gestor: ${PKG:-unknown}"
   echo -e "🔑 Root: ${IS_ROOT}\n"
-fi 
-}
+fi
+
