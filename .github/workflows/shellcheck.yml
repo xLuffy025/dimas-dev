@@ -19,4 +19,4 @@ jobs:
 
       - name: Run shellcheck on app-nota
         run: |
-          shellcheck experiments/bash/app-nota/notas.sh
+          shellcheck /nota_app/notas.sh
