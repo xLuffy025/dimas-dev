@@ -2,14 +2,19 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# ------------------------------------------------------
+#   CONFIGURACION INICIAL
+# ------------------------------------------------------
+
 DATA_DIR="$HOME/nota"
 LOG_DIR="$DATA_DIR/logs"
 LOG_FILE="$LOG_DIR/notas.log"
 
-
 mkdir -p "$DATA_DIR" "$LOG_DIR"
-
-trap 'err "Ocurrió un error inesperado."; exit 1' ERR
+# -------------------------------------------------------
+#     TRAP 
+# -------------------------------------------------------
+trap 'err "Error en linea $LINENO"; exit 1' ERR
 
 # -------------------------------------------------------
 #       Colores
@@ -42,8 +47,9 @@ command -v glow >/dev/null || { err  "glow no instalado"; exit 1; }
 #   FUNCIONES GENERALES
 # --------------------------------------------------------
 obtener_notas() { 
- 
-  notas=("$DATA_DIR"/*.md) 
+  shopt -s nullglob
+  notas=("$DATA_DIR"/*.md)
+  shopt -u nullglob
 }
 
 validar_notas() { 
@@ -73,20 +79,19 @@ seleccionar_notas() {
     read -p "Seleccione una nota por numero: " opt
 
     # Validación sea numero 
-    [[ "$opt" =~ ^[0-9]+$ ]] || {
+    if ! [[ "$opt" =~ ^[0-9]+$ ]]; then 
       err "Ingresa un numero valido."
       pausa
       continue
- 
+    fi 
 
-    }
-  # Convertir a indice (0 based)
-  idx=$((opt-1))
-  
-  # Validación: rango 
+    # Convertir a indice (0 based)
+    idx=$((opt-1))
+
+    # Validación: rango 
     if (( idx >= 0 && idx < ${#notas[@]} )); then
       seleccion="${notas[$idx]}"
-      break 
+      return 0 
     else
       err "Numero fuera de rango."
       pausa
@@ -94,7 +99,7 @@ seleccionar_notas() {
   done
 }
 
-pausa(){
+pausa() {
   read -p "Presione Enter para continuar... "
 }
 
@@ -126,32 +131,29 @@ crear_nota() {
       err "El Titulo no puede estar vacío." &&
       pausa &&
     continue
-    }
+    }  
 
-  # Validación: caracteres permitidos
+    # Validación: caracteres permitidos
     [[ ! "$nota" =~ ^[A-Za-z0-9_]+$ ]] && {
     err "Solo permite letras, número y _ ... " &&
     pausa &&
     continue
     }
-  
-  # Validación: existencía previa
-    if [[ -f "$HOME/nota/$nota.md" ]]; then
-        err "Aviso: la nota ya existe. No se puede Sobrescribirá.."
+
+    # Validación: existencía previa
+    if [[ -f "$DATA_DIR/$nota.md" ]]; then
+      err "Aviso: la nota ya existe. No se puede Sobrescribirá.."
       pausa && 
-      continue
-
+        continue
     fi 
-
     break 
-  done
+  done 
 
-  
   FILENAME="$DATA_DIR/$nota.md"
   TITLE="$nota"
   log_info "Nota creada: $nota.md"
 
-  echo "# $TITLE" > "$FILENAME"
+  printf "# $TITLE\n" > "$FILENAME"
 
   nvim "$FILENAME"
 }
@@ -165,9 +167,7 @@ lista_notas() {
 
 }
 
-buscar_nota(){
-  local notas 
-
+buscar_nota() {
   read -p "Ingresa palabra a buscar: " palabra
 
   [[ -z "$palabra" ]] && {
@@ -179,9 +179,8 @@ buscar_nota(){
   validar_notas || { err "No hay notas disponibles. "; return 1; }
 
   resultados=()
-  
   for archivo in "${notas[@]}"; do 
-    if grep -qi  "$palabra" "$archivo"; then
+    if grep -qiF  "$palabra" "$archivo"; then # -F para búsqueda literal
       resultados+=("$archivo")
     fi 
   done
@@ -193,7 +192,8 @@ buscar_nota(){
   fi 
 
   echo 
-  msg "Coincidencias encontrada:"
+  msg "Conincidencias encontrada:"
+  notas 
   for i in "${!resultados[@]}"; do
     nombre=$(basename "${resultados[$i]%.md}")
     echo "$((i+1)) $nombre"
@@ -210,7 +210,8 @@ buscar_nota(){
       seleccion="${resultados[$idx]}"
       break 
     else 
-      err "Numero fuera de rango."
+      err "Numero fuera de rango." 
+      pausa
     fi 
   done 
 
@@ -269,7 +270,7 @@ eliminar_nota(){
 mostrar_menu() {
   clear 
   echo -e "${CYAN}==============================${RESET}"
-  echo -e "${CYAN} 🚀 Notas Markdown     ${RESET}"
+  echo -e "${CYAN} 🚀 Notas Mackdown      ${RESET}"
   echo -e "${CYAN}==============================${RESET}"
   echo -e "${YELLOW}1)${RESET} Crear Nota" 
   echo -e "${YELLOW}2)${RESET} Listar Notas"
