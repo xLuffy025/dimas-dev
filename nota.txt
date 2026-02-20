@@ -2,9 +2,6 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# DEFINIMOS LA VARIABLE AQUÍ (Si no existe, vale 0)
-DEBUG="${DEBUG:-0}"
-
 # -------------------------------------------------------
 # Modo debug: pasar --debug o -d antes del comando activa set -x
 # Se procesa antes de la dispatch principal (shifteamos args)
