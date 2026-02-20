@@ -2,7 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-DATA_DIR="${DATA_DIR:-$HOME/nota}"
+DATA_DIR="${DATA_DIR:-$HOME/dimas-dev/nota}"
 LOG_DIR="${LOG_DIR:-$DATA_DIR/logs}"
 LOG_FILE="${LOG_FILE:-$LOG_DIR/notas.log}"
 
