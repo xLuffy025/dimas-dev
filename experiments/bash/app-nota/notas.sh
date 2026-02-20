@@ -2,12 +2,12 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-DATA_DIR="$HOME/nota"
-LOG_DIR="$DATA_DIR/logs"
-LOG_FILE="$LOG_DIR/notas.log"
-
+DATA_DIR="${DATA_DIR:-$HOME/nota}"
+LOG_DIR="${LOG_DIR:-$DATA_DIR/logs}"
+LOG_FILE="${LOG_FILE:-$LOG_DIR/notas.log}"
 
 mkdir -p "$DATA_DIR" "$LOG_DIR"
+
 trap 'err "Ocurrió un error inesperado."; exit 1' ERR
 
 # -------------------------------------------------------
@@ -40,8 +40,10 @@ command -v glow >/dev/null || { err  "glow no instalado"; exit 1; }
 # --------------------------------------------------------
 #   FUNCIONES GENERALES
 # --------------------------------------------------------
-obtener_notas() { 
-  notas=("$DATA_DIR"/*.md) 
+obtener_notas() {
+  shopt -s nullglob
+  notas=("$DATA_DIR"/*.md)
+  shopt -u nullglob
 }
 
 validar_notas() { 
@@ -65,7 +67,11 @@ seleccionar_notas() {
   
   # Pedir sececcion
   while true; do
-    read -p "Seleccione una nota por numero: " opt
+    if ! read -r -p "Seleccione una nota por numero: " opt; then
+      return 1
+    fi
+
+    #cancelar_si_solicita "$opt" || return 0
 
     # Validación sea numero 
     [[ "$opt" =~ ^[0-9]+$ ]] || {
@@ -90,12 +96,14 @@ seleccionar_notas() {
 }
 
 pausa(){
-  read -p "Presione Enter para continuar... "
+  read -r -p "Presione Enter para continuar... "
 }
 
 log_info() {
   local mensaje="$1"
-  echo "[INFO] $(date '+%F %T') - $mensaje" >> "$LOG_FILE"
+  if ! echo "[INFO] $(date '+%F %T') - $mensaje" >> "$LOG_FILE"; then
+    warn "No se pudo escribir en el log."
+  fi
 }
 
 cancelar_si_solicita() {
@@ -111,7 +119,9 @@ cancelar_si_solicita() {
 # --------------------------------------------------------
 crear_nota() {
   while true; do 
-    read -p "Nombre de Titulo: " texto 
+    if ! read -r -p "Nombre de Titulo (0) para cancelar: " texto; then
+      return 1
+    fi 
     cancelar_si_solicita "$texto" || return 0
 
     nota="${texto// /_}"
@@ -131,8 +141,8 @@ crear_nota() {
     }
   
   # Validación: existencía previa
-    if [[ -f "$HOME/nota/$nota.md" ]]; then
-        err "Aviso: la nota ya existe. No se puede Sobrescribirá.."
+    if [[ -f "$DATA_DIR/$nota.md" ]]; then
+      err "Aviso: la nota ya existe. No se puede sobrescribir."
       pausa && 
       continue
 
@@ -142,8 +152,8 @@ crear_nota() {
   done
 
   
-  FILENAME="$DATA_DIR/$nota.md"
-  TITLE="$nota"
+  local FILENAME="$DATA_DIR/$nota.md"
+  local TITLE="$nota"
   log_info "Nota creada: $nota.md"
 
   echo "# $TITLE" > "$FILENAME"
@@ -154,16 +164,25 @@ crear_nota() {
 lista_notas() {
   clear
 
-  obtener_notas
+  validar_notas || { err "No hay notas disponibles."; return 1; }
   msg "Notas disponibles:"
   imprimir_notas
 
 }
 
 buscar_nota(){
-  local notas 
+  local notas
+  local palabra
+  local resultados
+  local seleccion
+  local idx
+  local opt
 
-  read -p "Ingresa palabra a buscar: " palabra
+  if ! read -r -p "Ingresa palabra a buscar (0) para cancelar: " palabra; then
+    return 1
+  fi
+
+  cancelar_si_solicita "$palabra" || return 0
 
   [[ -z "$palabra" ]] && {
     err "Debes ingresar una palabra."
@@ -176,26 +195,30 @@ buscar_nota(){
   resultados=()
   
   for archivo in "${notas[@]}"; do 
-    if grep -qi  "$palabra" "$archivo"; then
+    if grep -Fqi  "$palabra" "$archivo"; then
       resultados+=("$archivo")
     fi 
   done
 
   if (( ${#resultados[@]} == 0 )); then
-    warn "No se encontro conincidencias:"
+    warn "No se encontraron coincidencias."
     pausa 
     return 1 
   fi 
 
-  echo 
-  msg "Conincidencias encontrada:"
+  echo
+  msg "Coincidencias encontradas:"
   for i in "${!resultados[@]}"; do
     nombre=$(basename "${resultados[$i]%.md}")
     echo "$((i+1)) $nombre"
   done 
 
-  while true; do 
-    read -p "Seleccione una nota por numero: " opt
+  while true; do
+    if ! read -r -p "Seleccione una nota por numero (0) para cancelar: " opt; then
+      return 1
+    fi
+
+    cancelar_si_solicita "$opt" || return 0
 
     [[ "$opt" =~ ^[0-9]+$ ]] || { err "Numero invalido."; continue; }
 
@@ -210,11 +233,12 @@ buscar_nota(){
   done 
 
   clear
-  msg "Que desea hacer?"
+  msg "Que desea hacer (0) para cancelar?"
   echo "1) Ver con glow"
   echo "2) Editar con neovim"
-  read -p "Elija una opcion: " opcion
-
+  read -r -p "Elija una opcion: " opcion
+  cancelar_si_solicita "$opcion" || return 0
+  
   case $opcion in 
     1) glow "$seleccion" ;;
     2) nvim "$seleccion" ;;
@@ -230,7 +254,8 @@ editar_nota(){
     msg "Que desea hacer con  tus notas?"
     echo "1) Ver con glow"
     echo "2) Editar con neovim"
-    read -p "Elige una opcion (1/2): " opcion
+    read -r -p "Elige una opcion (1/2): " opcion
+    cancelar_si_solicita "$opcion" || return 0
     clear
 
     case $opcion in 
@@ -244,16 +269,18 @@ eliminar_nota(){
   clear
   seleccionar_notas || return 1
 
-  if [[ -f "$seleccion" ]]; then 
-    read -p "¿Estás seguro de que deseas eliminar '$seleccion'? (s/n): " confirmacion
+  if [[ -f "$seleccion" ]]; then
+    local nombre
+    nombre=$(basename "$seleccion")
+    read -r -p "¿Estás seguro de que deseas eliminar '$nombre'? (s/n): " confirmacion
     if [[  "$confirmacion" == "s" || "$confirmacion" == "S" ]]; then 
       rm "$seleccion"
-      msg "El archivo '$seleccion' ha sido eliminado."
-    else 
-      msg " La eliminacion de '$seleccion'  ha sido cancelada."
+      msg "El archivo '$nombre' ha sido eliminado."
+    else
+      msg "La eliminacion de '$nombre' ha sido cancelada."
     fi 
   else 
-    msg "El archivo '$seleccion' no existe. "
+    msg "El archivo no existe. "
   fi 
 
 }
@@ -283,6 +310,7 @@ if [ $# -gt 0 ]; then
         crear) crear_nota ;;
         listar) lista_notas ;;
         buscar) buscar_nota ;;
+        editar) editar_nota ;;
         eliminar) eliminar_nota ;;
         *) err "Opción no válida"; exit 1 ;;
         
