@@ -2,6 +2,17 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# -------------------------------------------------------
+# Modo debug: pasar --debug o -d antes del comando activa set -x
+# Se procesa antes de la dispatch principal (shifteamos args)
+# -------------------------------------------------------
+DEBUG=0
+if [[ "${1-}" == "--debug" || "${1-}" == "-d" ]]; then
+  DEBUG=1
+  set -x
+  shift
+fi
+
 # Directorios y archivos por defecto
 DATA_DIR="${DATA_DIR:-$HOME/dimas-dev/nota}"
 LOG_DIR="${LOG_DIR:-$DATA_DIR/logs}"
@@ -10,12 +21,13 @@ TRASH_DIR="$DATA_DIR/.trash"
 
 mkdir -p "$DATA_DIR" "$LOG_DIR" "$TRASH_DIR"
 
-# Debug: track last command for better ERR reporting
+# Inicializar variables usadas por el trap (evita errores con set -u)
 current_command=''
 last_command=''
 
-trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
-trap 'err "El comando \"${last_command:-unknown}\" falló."; exit 1' ERR
+# Registrar último comando para depuración
+trap 'last_command=${current_command-}; current_command=$BASH_COMMAND' DEBUG
+trap 'ret=$?; err "Fallo: comando \"${last_command:-unknown}\" devolvió $ret"; exit $ret' ERR
 
 # -------------------------------------------------------
 #       Colores
@@ -40,7 +52,6 @@ err(){ printf "%b[✖️]  %b %s\n" "$RED" "$RESET" "$1"; }
 # -------------------------------------------------------
 #   DEPENDENCIAS / EDITOR / GLOW
 # -------------------------------------------------------
-# Selección de editor: usa $EDITOR si está definido, si no busca nvim/vim/nano
 choose_editor() {
   if [[ -n "${EDITOR-}" ]] && command -v "${EDITOR}" >/dev/null 2>&1; then
     printf '%s' "${EDITOR}"
@@ -52,7 +63,6 @@ choose_editor() {
       return
     fi
   done
-  # Si no hay editor disponible, salimos con error
   err "No se encontró un editor (neovim/vim/nano). Exporta \$EDITOR o instala uno."
   exit 1
 }
@@ -67,9 +77,40 @@ else
 fi
 
 # --------------------------------------------------------
+#   UTIL: slugify para títulos (transliteración opcional)
+# --------------------------------------------------------
+slugify() {
+  local input="$1"
+  # trim
+  input="${input#"${input%%[![:space:]]*}"}"
+  input="${input%"${input##*[![:space:]]}"}"
+  # empty guard
+  [[ -z "$input" ]] && { printf ''; return 0; }
+
+  if command -v iconv >/dev/null 2>&1; then
+    # translitera acentos a ASCII, baja a minúsculas, reemplaza espacios por _
+    local ascii
+    ascii=$(printf '%s' "$input" | iconv -f utf8 -t ascii//TRANSLIT 2>/dev/null || printf '%s' "$input")
+    ascii=$(printf '%s' "$ascii" | tr '[:upper:]' '[:lower:]')
+    ascii="${ascii// /_}"
+    # eliminar caracteres no permitidos, dejar a-z0-9_- 
+    ascii=$(printf '%s' "$ascii" | sed 's/[^a-z0-9_-]//g')
+    # colapsar guiones bajos múltiples
+    ascii=$(printf '%s' "$ascii" | sed 's/_\+/_/g; s/^-//; s/-$//; s/^_//; s/_$//')
+    printf '%s' "$ascii"
+  else
+    warn "iconv no disponible: se conservarán caracteres UTF-8 (instala libc-bin/iconv para mejores slugs)."
+    # fallback: reemplazar espacios por _ y slashes por -
+    local safe="${input// /_}"
+    safe="${safe//\//-}"
+    safe=$(printf '%s' "$safe" | sed 's/_\+/_/g; s/^-//; s/-$//; s/^_//; s/_$//')
+    printf '%s' "$safe"
+  fi
+}
+
+# --------------------------------------------------------
 #   FUNCIONES GENERALES
 # --------------------------------------------------------
-# NOTAS: array global con rutas a archivos .md
 obtener_notas() {
   shopt -s nullglob
   mapfile -t NOTAS < <(printf '%s\n' "$DATA_DIR"/*.md 2>/dev/null | sort -V)
@@ -86,6 +127,14 @@ imprimir_notas() {
     nombre=$(basename "${NOTAS[$i]%.md}") 
     printf "%s) %s\n" "$((i+1))" "$nombre"
   done 
+}
+
+cancelar_si_solicita() {
+  local valor="$1"
+  if [[ "$valor" == "0" ]]; then
+    return 1
+  fi 
+  return 0
 }
 
 seleccionar_notas() {
@@ -124,14 +173,6 @@ log_info() {
     warn "No se pudo escribir en el log: $LOG_FILE"
 }
 
-cancelar_si_solicita() {
-  local valor="$1"
-  if [[ "$valor" == "0" ]]; then
-    return 1
-  fi 
-  return 0
-}
-
 # --------------------------------------------------------
 #         Funciones Principales
 # --------------------------------------------------------
@@ -142,37 +183,31 @@ crear_nota() {
     fi 
     cancelar_si_solicita "$texto" || return 0
 
-    # trim (quitar espacios al inicio/fin)
+    # trim
     texto="${texto#"${texto%%[![:space:]]*}"}"
     texto="${texto%"${texto##*[![:space:]]}"}"
 
-    [[ -z "$texto"  ]] && {
-      err "El título no puede estar vacío."
-      pausa
-      continue
-    }
+    [[ -z "$texto"  ]] && { err "El título no puede estar vacío."; pausa; continue; }
 
-    # Normalizar espacios a guiones bajos y eliminar caracteres no permitidos
-    nota="${texto// /_}"
+    # generar slug (intenta transliterar)
+    nota="$(slugify "$texto")"
 
-    # Validación: caracteres permitidos (letras, números, _ y -)
-    if [[ ! "$nota" =~ ^[A-Za-z0-9_-]+$ ]]; then
-      err "El título solo permite letras, números, guión bajo y guión medio."
+    if [[ -z "$nota" ]]; then
+      err "No se pudo generar un nombre válido a partir del título. Intenta otro título."
       pausa
       continue
     fi
-  
-    # Validación: existencia previa
+
+    # Validación existencia previa
     if [[ -f "$DATA_DIR/$nota.md" ]]; then
       err "Aviso: la nota ya existe. No se puede sobrescribir."
       pausa
       continue
-    fi 
+    fi
 
     break 
   done
 
-  
   local FILENAME="$DATA_DIR/$nota.md"
   local TITLE="$texto"
   printf "# %s\n\n" "$TITLE" > "$FILENAME"
@@ -254,7 +289,6 @@ buscar_nota(){
   
   case $opcion in 
     1)
-      # Mostrar líneas donde aparece la palabra y luego abrir con glow/less
       printf "\n%s\n\n" "$(grep -n --color=always -i -- "$palabra" "$seleccion_local" | sed -n '1,20p')"
       if (( HAVE_GLOW )); then
         glow "$seleccion_local"
@@ -268,8 +302,7 @@ buscar_nota(){
 }
 
 editar_nota(){
-  if ! seleccionar_notas; then return 0; fi
-  #seleccionar_notas || return 1
+  seleccionar_notas || return 1
 
   clear
   msg "¿Qué desea hacer con la nota?"
@@ -359,4 +392,5 @@ else
     esac 
     pausa
   done
-fi
+fi 
+
