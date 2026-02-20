@@ -107,7 +107,7 @@ pausa(){
 
 log_info() {
   local mensaje="$1"
-  if ! "[INFO] $(date '+%F %T') - $mensaje" >> "$LOG_FILE"; then 
+  if ! echo "[INFO] $(date '+%F %T') - $mensaje" >> "$LOG_FILE"; then
     warn "No se pudo escribir en el log."
   fi
 }
@@ -170,8 +170,8 @@ crear_nota() {
 lista_notas() {
   clear
 
-  validar_notas || { err "No hay notas disponibles."; return 1; }
   obtener_notas
+  #validar_notas || { err "No hay notas disponibles."; return 1; }
   msg "Notas disponibles:"
   imprimir_notas
 
@@ -185,7 +185,7 @@ buscar_nota(){
   local idx
   local opt
 
-  if ! read -p "Ingresa palabra a buscar: " palabra; then
+  if ! read -r -p "Ingresa palabra a buscar: " palabra; then
     return 1 
   fi
 
@@ -303,6 +303,7 @@ mostrar_menu() {
   echo
 
 }
+
 # --------------------------------------------------------
 #   FUNCIONES AUTOMATICAS
 # --------------------------------------------------------
