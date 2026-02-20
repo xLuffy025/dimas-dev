@@ -6,11 +6,10 @@ IFS=$'\n\t'
 # Modo debug: pasar --debug o -d antes del comando activa set -x
 # Se procesa antes de la dispatch principal (shifteamos args)
 # -------------------------------------------------------
-DEBUG=0
-if [[ "${1-}" == "--debug" || "${1-}" == "-d" ]]; then
-  DEBUG=1
+# Si se activa el modo debug, mostramos aviso y activamos tracing.
+if (( DEBUG )); then
+  msg "Modo debug activado"
   set -x
-  shift
 fi
 
 # Directorios y archivos por defecto
@@ -24,6 +23,7 @@ mkdir -p "$DATA_DIR" "$LOG_DIR" "$TRASH_DIR"
 # Inicializar variables usadas por el trap (evita errores con set -u)
 current_command=''
 last_command=''
+ret=0
 
 # Registrar último comando para depuración
 trap 'last_command=${current_command-}; current_command=$BASH_COMMAND' DEBUG
@@ -36,9 +36,9 @@ GREEN="\e[32m"
 YELLOW="\e[33m"
 CYAN="\e[36m"
 RED="\e[31m"
-BLUE="\e[34m"
-MAGENTA="\e[35m"
-WHITE="\e[97m"
+#BLUE="\e[34m"
+#MAGENTA="\e[35m"
+#WHITE="\e[97m"
 RESET="\e[0m"
 
 # -------------------------------------------------------
@@ -169,8 +169,9 @@ pausa(){
 
 log_info() {
   local mensaje="$1"
-  printf '[INFO] %s - %s\n' "$(date '+%F %T')" "$mensaje" >> "$LOG_FILE" || \
+  if ! printf '[INFO] %s - %s\n' "$(date '+%F %T')" "$mensaje" >> "$LOG_FILE"; then
     warn "No se pudo escribir en el log: $LOG_FILE"
+  fi
 }
 
 # --------------------------------------------------------
@@ -335,12 +336,14 @@ eliminar_nota(){
     read -r -p "¿Estás seguro de que deseas eliminar '$nombre'? (s/n): " confirmacion
     if [[  "$confirmacion" == "s" || "$confirmacion" == "S" ]]; then 
       mkdir -p "$TRASH_DIR"
-      mv "$seleccion" "$TRASH_DIR/" && {
+      if mv "$seleccion" "$TRASH_DIR/"; then
         log_info "Nota movida a la papelera: $nombre"
         msg "El archivo '$nombre' ha sido movido a la papelera ($TRASH_DIR)."
-      } || {
+      else
         err "No se pudo mover '$nombre' a la papelera."
-      }
+fi
+
+
     else
       msg "La eliminación de '$nombre' ha sido cancelada."
     fi 
