@@ -10,17 +10,19 @@ Características añadidas:
 
 Uso:
 - Ejecutar interactivo:
-  ./experiments/bash/app-nota/notas.sh
+  ./dimas-dev/nota_app/notas.sh 
+
 - Comandos directos:
-  ./experiments/bash/app-nota/notas.sh crear
-  ./experiments/bash/app-nota/notas.sh listar
-  ./experiments/bash/app-nota/notas.sh buscar
-  ./experiments/bash/app-nota/notas.sh editar
-  ./experiments/bash/app-nota/notas.sh eliminar
+  ./dimas-dev/nota_app/notas.sh crear
+  ./dimas-dev/nota_app/notas.sh listar
+  ./dimas-dev/nota_app/notas.sh buscar
+  ./dimas-dev/nota_app/notas.sh editar
+  ./dimas-dev/nota_app/notas.sh elimina
 - Modo debug (trazado):
-  ./experiments/bash/app-nota/notas.sh --debug crear
+  ./experiments/bash/app-nota/notas.sh eliminar
+  ./dimas-dev/nota_app/notas.sh --debug crear
   o
-  ./experiments/bash/app-nota/notas.sh -d listar
+  ./dimas-dev/nota_app/notas.sh -d listar
 
 Slug / títulos:
 - Si `iconv` está instalado, el script translitera acentos (´á → a´, ñ→n) y crea un slug ASCII seguro.
