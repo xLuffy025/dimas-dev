@@ -2,19 +2,6 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# DEFINIMOS LA VARIABLE AQUÍ (Si no existe, vale 0)
-DEBUG="${DEBUG:-0}"
-
-# -------------------------------------------------------
-# Modo debug: pasar --debug o -d antes del comando activa set -x
-# Se procesa antes de la dispatch principal (shifteamos args)
-# -------------------------------------------------------
-# Si se activa el modo debug, mostramos aviso y activamos tracing.
-if (( DEBUG )); then
-  msg "Modo debug activado"
-  set -x
-fi
-
 # Directorios y archivos por defecto
 DATA_DIR="${DATA_DIR:-$HOME/dimas-dev/nota_app/nota}"
 LOG_DIR="${LOG_DIR:-$DATA_DIR/logs}"
@@ -39,9 +26,6 @@ GREEN="\e[32m"
 YELLOW="\e[33m"
 CYAN="\e[36m"
 RED="\e[31m"
-#BLUE="\e[34m"
-#MAGENTA="\e[35m"
-#WHITE="\e[97m"
 RESET="\e[0m"
 
 # -------------------------------------------------------
@@ -370,6 +354,34 @@ mostrar_menu() {
   printf "%b5)%b Eliminar nota\n" "$YELLOW" "$RESET"
   printf "%b0)%b Salir\n\n" "$YELLOW" "$RESET"
 }
+
+# --------------------------------------------------------
+#   PROCESAR ARGUMENTOS GLOBALES (ej. --debug)
+# --------------------------------------------------------
+# Definimos la variable por defecto
+DEBUG="${DEBUG:-0}"
+
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        -d|--debug) 
+            DEBUG=1 
+            shift # Quitamos la bandera -d para que no interfiera con el resto
+            ;;
+        -*)
+            err "Bandera $1 desconocida."
+            exit 1
+            ;;
+        *) 
+            break # Si no empieza con "-", dejamos de buscar banderas
+            ;;
+    esac
+done
+
+# Activar el debug si la variable es 1 (ya sea por entorno o por la bandera -d)
+if (( DEBUG )); then
+  msg "Modo debug activado"
+  set -x
+fi
 
 # --------------------------------------------------------
 #   FUNCIONES AUTOMATICAS / CLI
