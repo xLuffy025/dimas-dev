@@ -3,8 +3,6 @@ set -eou pipefail
 IFS=$'\n\t'
 
 
-PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$PROJET_ROOT"
 # ==========================================
 # Colores
 # ==========================================

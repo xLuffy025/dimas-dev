@@ -3,14 +3,6 @@ set -eou pipefail
 IFS=$'\n\t'
 
 # ---------------------------------------------------
-# Funciones Generalea
-# ---------------------------------------------------
-PROJET_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$PROJET_ROOT"
-
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/colores.sh"
-
-# ---------------------------------------------------
 # Funciones de mensajes 
 # ---------------------------------------------------
 msg() { printf "%b===>%b %s\n" "$CYAN" "$RESET" "$1"; }
