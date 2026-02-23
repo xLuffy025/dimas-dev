@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -9,14 +9,14 @@ cd "$PROJECT_ROOT"
 # ==========================================
 #   SISTEMA CAJA DE AHORRO 2026
 #   Modelo 3 + Sistema 2
-#   Autor: José + Copilot
+#   Autor: xLuffy025
 # ==========================================
 
 # ==========================================
 # VARIABLES GLOBALES
 # ==========================================
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config.sh"
-
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/msj.sh"
 
 # ==========================================
 #   COLORES
