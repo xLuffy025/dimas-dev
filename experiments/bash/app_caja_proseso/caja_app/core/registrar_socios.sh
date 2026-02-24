@@ -11,9 +11,11 @@ registrar_socio() {
 
   # ------ Pedir nombre corto ------
   
-  while true; do
+  while true; do 
+    read -r -p "Nombre corto (0 pata cancelar): " nombre
+    cancelar_si_solicita "$nombre" || return 0
 
-  
-
+    # ------ Validacion
+    
                
 }
