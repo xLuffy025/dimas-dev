@@ -111,7 +111,7 @@ crear_usuario() {
       cut -d',' -f4 "$USUARIO_DIR/lista_usuarios.csv" | grep -qx "$tel" &&
         echo -e "${ROJO}Aviso: Ese numero ya esta en existencia.${RESET}" &&
         continue
-        break 
+      break 
       done
         
       # -----------------------------
