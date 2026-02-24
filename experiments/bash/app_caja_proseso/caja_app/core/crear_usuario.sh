@@ -58,6 +58,23 @@ registrar_socio() {
     done
 
     while true; do 
+      clear 
+      printf "%b=========================%b\n" "$CYAN" "$RESET"
+      printf "%b Contraseña %b\n" "$MAG4NTA" "$RESETN" 
+      printf "%b=========================%b\n" "$CYAN" "$RESET" 
+      read -r -p "Defina una contraseña (minimo 4 caracteres sin espacio.)" clave 
+      cancelar_si_solicita $clave || return 0 
+      
+      if [[ -z $clave || ${#clave} -lt 4 || "$clave" =~ [[:space:]] ]]; then 
+        err "Error: Contraseña invalida."
+        pausa
+        continue 
+      fi 
+      break
+    done
+        
+
+    while true; do 
       clear
       printf "%b=========================%b\n" "$CYAN" "$RESET"
       printf "%b Número de telefono %b\n" "$MAGENTA" "$RESET"
