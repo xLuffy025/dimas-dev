@@ -9,32 +9,41 @@ crear_usuario() {
   printf "%b  Registro de socio nuevo %b\n" "$MAGENTA" "$RESET"
   printf "%b=========================%b\n" "$CYAN" "$RESET"
 
-  # ------ 1. Pedir nombre corto ------
-  
-  while true; do 
-    read -r -p "Nombre corto (0 pata cancelar): " nombre
-    cancelar_si_solicita "$nombre" || return 0
+    # -----------------------------
+    # 1. Pedir nombre corto
+    # -----------------------------
+    while true; do
+      read -r -p "Nombre corto (0 cancelar): " nombre
+      cancelar_si_solicita "$nombre" || return 0
 
-    # ------ Validación: no vacio -------
-    [[ -z "$nombre" ]] && { err "El nombre no puede estar vacio." continue; }
+    # Validación: no vacío
+        [[ -z "$nombre" ]] && 
+        err "Error: El nombre no puede estar vacío." &&
+        continue
 
-    # ----- Validación: longitud ------
-    [[ ${#nombre} -gt 12 ]] && { err "Error maximo 12 caracteres permitidos." continue; }
+    # Validación: longitud
+        [[ ${#nombre} -gt 12 ]] &&
+        err "Error: Máximo 12 caracteres permitidos." &&
+        continue
 
-    # ------ Validación: caracteres permitidos ------
-    [[ ! "$nombre" =~ ^[A-Za-z0-9_]+$ ]] && { err "Error: Solo letras/números/_" continue; }
+    # Validación: caracteres permitidos
+       [[ ! "$nombre" =~ ^[A-Za-z0-9_]+$ ]] &&
+        err "Error: Solo letras/números/_ " &&
+        continue
 
-    # ------ Validación: existencia previa
-    grep -q "^$nombre," "$USUARIO_DIR/lista_usuarios.csv" && 
-      warn "Aviso: Ese nombre ya está registrado" &&
-      continue
-      break
-    done
+    # Validación: existencia previa
+    grep -q "^$nombre," "$USUARIO_DIR/lista_usuarios.csv" &&
+        warn "Aviso: Ese nombre ya está registrado." &&
+        continue
+    break 
+  done
 
-    # ------ 2. Selección de fecha de entrega ------
+    # -----------------------------
+    # 2. Selección de fecha de entrega
+    # -----------------------------
     while true; do 
-      clear 
-      printf "%b=========================%b\n" "$CYAN" "$RESET"
+    clear 
+    printf "%b=========================%b\n" "$CYAN" "$RESET"
       printf "%b  Fecha de entrega  %b\n" "$MAGENTA" "$RESET"
       printf "%b=========================%b\n" "$CYAN" "$RESET"
 
@@ -50,7 +59,7 @@ crear_usuario() {
         3) fecha="20-Diciembre" ;;
         *) err "Error: Opción invalida."
           cancelar_si_solicita "$opt" || return 0 
-          sleep 2 
+          sleep 2;
           continue
       esac
       break
@@ -63,15 +72,12 @@ crear_usuario() {
       printf "%b=========================%b\n" "$CYAN" "$RESET" 
       read -r -p "Defina una contraseña (minimo 4 caracteres sin espacio.): " clave 
       cancelar_si_solicita "$clave" || return 0 
-      
-      if [[ -z $clave || ${#clave} -lt 4 || "$clave" =~ [[:space:]] ]]; then 
-        err "Error: Contraseña invalida."
-        pausa
-        continue 
-      fi 
+
+      if [[ -z "$clave" || ${#clave} -lt 4 || "$clave" =~ [[:space:]] ]]; then
+      err "Error: Contraseña inválida."; sleep 2; continue
+      fi
       break
-    done
-        
+    done 
 
     while true; do 
       clear
@@ -79,47 +85,51 @@ crear_usuario() {
       printf "%b Número de telefono %b\n" "$MAGENTA" "$RESET"
       printf "%b=========================%b\n" "$CYAN" "$RESET"
 
-      read -r -p "Ingresa un número de telefono: " telefono
-      cancelar_si_solicita "$telefono" || return 0 
+      read -r -p "Ingresa un numero de telefono:" tel
+      cancelar_si_solicita "$tel" || return 0
 
-      # ------ Validación: no vacio ------
-      if  [[ -z "$telefono" ]]; then
-        err "El numero no puede estar vacio." 
-        sleep 2
+      # Validación: no vacio
+      if [[ -z "$tel" ]]; then        
+        err "Error: El numero no puede estar vacio."
+        sleep 2 
+        continue 
+      fi  
+
+      # Validación: longitud
+      [[ ! "$tel" =~ ^[0-9]{10}$ ]] &&
+        err "Error: Maximo 10 caracteres permitidos." &&
         continue
-      fi
-
-      # ------ Validación: longitud ------
-      [[ ! "$telefono" =~ ^[0-9]{10}$ ]] && 
-      err "Error: Maximo 10 caracteres permitidos." &&
-      continue
-
-      # ------ Validación: caracteres permitidos ------
-      if [[ ! "$telefono" =~ ^[0-9]+$ ]]; then 
-        err "Error: Solo numeros."
-        sleep 2
-        continue
-      fi
       
-      # ------ Validación: Existencia previa ------
-      cut -d',' -f4 "$USUARIO_DIR/lista_usuarios.scv" | grep -qx "telefono" &&
-        warn "Aviso: Ese numero ya esta en eistencia." &&
+      #Validación: caracteres permitidos
+      if [[ ! "$tel" =~ ^[0-9]+$ ]]; then
+        err "Error: solo numero."
+        sleep 2 
         continue
-        break
-    done
+      fi 
 
-    # ------ 3. Crear estructura del socio ------
-    clave_hash=$(echo -n "$clave" | sha256sum | cut -d' ' -f1)
+      # Validación: existencia previa
+      cut -d',' -f4 "$USUARIO_DIR/lista_usuarios.csv" | grep -qx "$tel" &&
+        echo -e "${ROJO}Aviso: Ese numero ya esta en existencia.${RESET}" &&
+        continue
+        break 
+      done
+        
+      # -----------------------------
+      # 3. Crear estructura del socio
+      # -----------------------------
 
-    mkdir -p "$USUARIO_DIR/$nombre/evidencias"
-    touch "$USUARIO_DIR/$nombre/registros.csv"
+      clave_hash=$(echo -n "$clave" | sha256sum | cut -d' ' -f1)
 
-    # ------ 4. Registrar en archivo maestro ------
-    echo "$nombre,$fecha,$clave_hash,$telefono" >> "$USUARIO_DIR/lista_usuarios.csv"
+      mkdir -p "$USUARIO_DIR/$nombre/evidencias"
+      touch "$USUARIO_DIR/$nombre/registros.csv"
 
-    msg "Socio '$nombre' registro exitosamente con fecha de entrega: $fecha."
-    pausa 
+      # -----------------------------
+      # 4. Registrar en archivo maestro
+      # -----------------------------
+      echo "$nombre,$fecha,$clave_hash,$tel" >> "$USUARIO_DIR/lista_usuarios.csv"
 
-  log_info "Registro Socio $nombre"
+      msg "Socio '$nombre' registrado exitosamente con fecha de entrega: $fecha."
+      pausa
 
+      log_info "Registro Socio $nombre"
 }
