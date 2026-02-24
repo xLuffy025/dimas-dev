@@ -69,25 +69,33 @@ registrar_aportacion() {
       echo -e "${ROJO}No hay socios registrados.${RESET}" &&
       pausa &&
       return
-    cut -d',' -f1 "$USUARIO_DIR/lista_usuarios.csv"    
-    echo -e "${AMARILLO}Socios disponibles:${RESET}" 
-
-    # -----------------------------------------
-    # 2. Seleccionar socio
-    # -----------------------------------------
-    while true; do
-      echo -e "${ROJO}(0 para cancelar)${RESET}"
-      echo ""
-      read -p "Ingrese el nombre corto del socio: " socio
-      cancelar_si_solicita "$socio"  || return 0
-      grep -q "^$socio," "$USUARIO_DIR/lista_usuarios.csv" || {
-        echo -e "${ROJO}Erro: El socio no existe.${RESET}";
-        pausa;
-        return;
-      }
-      break 
-    done 
-
+   │ # -----------------------------------------
+   │ # 2. Seleccionar socio por número
+   │ # -----------------------------------------
+   │ local socios=()
+   │ local i=1
+   │ while IFS= read -r linea; do
+   │ │ socio_nombre=$(echo "$linea" | cut -d',' -f1)
+   │ │ socios+=("$socio_nombre")
+   │ │ echo "$i) $socio_nombre"
+   │ │ ((i++))
+   │ done < "$USUARIO_DIR/lista_usuarios.csv"
+   │
+   │ while true; do
+   │ │ echo -e "${ROJO}(0 para cancelar)${RESET}"
+   │ │ echo ""
+   │ │ read -p "Seleccione el número del socio: " opcion
+   │ │ cancelar_si_solicita "$opcion" || return 0
+   │ │
+   │ │ if [[ ! "$opcion" =~ ^[0-9]+$ ]] || ((opcion < 1 || opcion > ${#socios[@]})); then
+   │ │ │ echo -e "${ROJO}Error: Selección inválida.${RESET}"
+   │ │ │ pausa
+   │ │ │ continue
+   │ │ fi
+   │ │
+   │ │ socio="${socios[$((opcion-1))]}"
+   │ │ break
+   │ done
     # -----------------------------------------
     # 3. Pedir monto
     # -----------------------------------------
