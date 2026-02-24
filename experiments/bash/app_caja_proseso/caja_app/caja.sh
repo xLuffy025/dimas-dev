@@ -48,8 +48,8 @@ cancelar_si_solicita() {
 #   FUNCIÓN: REGISTRAR SOCIO
 # ==========================================
 }
-crear_usuario() {
-  source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/core/crear_usuario.sh"
+crear_socio() {
+  source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/core/crear_socio.sh"
 }
 
 # ==========================================
@@ -577,7 +577,7 @@ while true; do
     read -p "Seleccione una opción: " opcion
 
     case "$opcion" in
-        1) crear_usuario ;;
+        1) crear_socio ;;
         2) registrar_aportacion ;;
         3) consultar_historial ;;
         4) generar_reporte ;;
@@ -586,7 +586,7 @@ while true; do
         7) respaldar ;;
         8) configuracion ;;
         0) exit ;;
-        *) echo -e "\e[1;31mOpción inválida.\e[0m"; sleep 1 ;;
+        *) err "Opción inválida."; sleep 1 ;;
     esac
 done
 

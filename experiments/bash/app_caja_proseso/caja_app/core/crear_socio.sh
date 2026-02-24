@@ -3,7 +3,7 @@
 set -eou pipefail
 IFS=$'\n\t'  
 
-crear_usuario() {
+#crear_socio() {
   clear
   printf "%b=========================%b\n" "$CYAN" "$RESET"
   printf "%b  Registro de socio nuevo %b\n" "$MAGENTA" "$RESET"
@@ -35,8 +35,8 @@ crear_usuario() {
     grep -q "^$nombre," "$USUARIO_DIR/lista_usuarios.csv" &&
         warn "Aviso: Ese nombre ya está registrado." &&
         continue
-    break 
-  done
+      break 
+    done
 
     # -----------------------------
     # 2. Selección de fecha de entrega
@@ -111,9 +111,9 @@ crear_usuario() {
       cut -d',' -f4 "$USUARIO_DIR/lista_usuarios.csv" | grep -qx "$tel" &&
         warn "Aviso: Ese numero ya esta en existencia." &&
         continue
-      break 
+      break
     done
-        
+
       # -----------------------------
       # 3. Crear estructura del socio
       # -----------------------------
@@ -132,4 +132,4 @@ crear_usuario() {
       pausa
 
       log_info "Registro Socio $nombre"
-}
+#}
