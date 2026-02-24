@@ -109,10 +109,10 @@ crear_usuario() {
 
       # Validación: existencia previa
       cut -d',' -f4 "$USUARIO_DIR/lista_usuarios.csv" | grep -qx "$tel" &&
-        echo -e "${ROJO}Aviso: Ese numero ya esta en existencia.${RESET}" &&
+        warn "Aviso: Ese numero ya esta en existencia." &&
         continue
       break 
-      done
+    done
         
       # -----------------------------
       # 3. Crear estructura del socio
