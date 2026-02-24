@@ -3,7 +3,7 @@
 set -eou pipefail
 IFS=$'\n\t'  
 
-registrar_socio() {
+#registrar_socio() {
   clear
   printf "%b=========================%b\n" "$CYAN" "$RESET"
   printf "%b  Registro de socio nuevo %b\n" "$MAGENTA" "$RESET"
@@ -126,4 +126,4 @@ registrar_socio() {
   log_info "Registro Socio $nombre"
 
 
-}
+#}
