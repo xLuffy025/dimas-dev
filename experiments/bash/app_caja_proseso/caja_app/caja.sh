@@ -17,8 +17,7 @@ cd "$PROJECT_ROOT"
 # ==========================================
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/msj.sh"
-
-# ==========================================
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/core/crear_usuario.sh"
 #   COLORES
 # ==========================================
 #RESET="\e[0m"
@@ -56,150 +55,152 @@ cancelar_si_solicita() {
   fi 
   return 0 
 }
-
+crear_usuario() {
+  bash /core/crear_usuario.sh
+}
 # ==========================================
 #   FUNCIÓN: REGISTRAR SOCIO
 # ==========================================
-registrar_socio() {
-    clear
-      echo -e "${CYAN}====================================${RESET}"
-      echo -e "${MAGENTA}    REGISTRO DE NUEVO SOCIO    ${RESET}"
-      echo -e "${CYAN}====================================${RESET}"
-
-
-    # -----------------------------
-    # 1. Pedir nombre corto
-    # -----------------------------
-    while true; do
-      read -p "Nombre corto (0 cancelar): " nombre
-      cancelar_si_solicita "$nombre" || return 0
-
-    # Validación: no vacío
-        [[ -z "$nombre" ]] && 
-        echo -e "${ROJO}Error: El nombre no puede estar vacío.${RESET}" &&
-        continue
-
-    # Validación: longitud
-        [[ ${#nombre} -gt 12 ]] &&
-        echo -e "${ROJO}Error: Máximo 12 caracteres permitidos.${RESET}" &&
-        continue
-
-    # Validación: caracteres permitidos
-       [[ ! "$nombre" =~ ^[A-Za-z0-9_]+$ ]] &&
-        echo -e "${ROJO}Error: Solo letras/números/_${RESET} " &&
-        continue
-
-    # Validación: existencia previa
-    grep -q "^$nombre," "$USUARIO_DIR/lista_usuarios.csv" &&
-        echo -e "${ROJO}Aviso: Ese nombre ya está registrado.${RESET}" &&
-        continue
-    break 
-  done
-
-    # -----------------------------
-    # 2. Selección de fecha de entrega
-    # -----------------------------
-    while true; do
-      clear
-      echo ""
-      echo -e "${CYAN}====================================${RESET}"
-      echo -e "${MAGENTA}     FECHA DE ENTREGA       ${RESET}"
-      echo -e "${CYAN}====================================${RESET}"
-      echo -e "${BLANCO} Seleccione fecha de entrega:${RESET}"
-
-      echo -e "${CYAN}1)${RESET} 13 de JUNIO"
-      echo -e "${CYAN}2)${RESET} 12 de NOVIEMBRE"
-      echo -e "${CYAN}3)${RESET} 20 de DICIEMBRE"
-      echo -e "${ROJO}0)${RESET} Cancelar"
-      read -p "Opción (1/2/3): " opcion
-
-      case "$opcion" in
-        1) fecha="13-JUNIO" ;;
-        2) fecha="12-NOVIEMBRE" ;;
-        3) fecha="20-DICIEMBRE" ;;
-        *) echo -e "${ROJO}Error: Opción inválida.${RESET}"
-          cancelar_si_solicita "$opcion" || return 0
-          sleep 2;
-          continue
-      esac
-      break 
-    done
-
-    # =============================================================
-    #     CONTRASENA
-    # =============================================================
-    while true; do
-      clear
-      echo -e "${ROJO}(0 para cancelar)${RESET}"
-      echo -e "${CYAN}====================================${RESET}"
-      echo -e "${MAGENTA}     CONTRASEÑA         ${RESET} "  
-      echo -e "${CYAN}====================================${RESET}"
-
-      read -p "Defina una contraseña (mínimo 4 caracteres, sin espacios): " clave
-      cancelar_si_solicita "$clave" || return 0
-
-      if [[ -z "$clave" || ${#clave} -lt 4 || "$clave" =~ [[:space:]] ]]; then
-        echo -e "${ROJO}Error: Contraseña inválida.${RESET}"; sleep 2; continue
-      fi 
-      break 
-    done
-
-    #========================================================
-    #   TELEFONO
-    #========================================================
-    while true; do 
-      clear
-      echo -e "${ROJO}(0 para cancelar)${RESET}"
-      echo -e "${CYAN}============================================${RESET}"
-      echo -e "${MAGENTA}       TELEFONO                ${RESET}"
-      echo -e "${CYAN}============================================${RESET}"
-
-      read -p "Ingresa un numero de telefono:" tel
-      cancelar_si_solicita "$tel" || return 0
-
-      # Validación: no vacio
-      if [[ -z "$tel" ]]; then        
-        echo -e "${ROJO}Error: El numero no puede estar vacio.${RESET}"
-        sleep 2 
-        continue 
-      fi  
-
-      # Validación: longitud
-      [[ ! "$tel" =~ ^[0-9]{10}$ ]] &&
-        echo -e "${ROJO}Error: Maximo 10 caracteres permitidos.${RESET}" &&
-        continue
-      
-      #Validación: caracteres permitidos
-      if [[ ! "$tel" =~ ^[0-9]+$ ]]; then
-        echo -e "${ROJO}Error: solo numero.${RESET}"
-        sleep 2 
-        continue
-      fi 
-
-      # Validación: existencia previa
-      cut -d',' -f4 "$USUARIO_DIR/lista_usuarios.csv" | grep -qx "$tel" &&
-        echo -e "${ROJO}Aviso: Ese numero ya esta en existencia.${RESET}" &&
-        continue
-        break 
-      done
-
-    # -----------------------------
-    # 3. Crear estructura del socio
-    # -----------------------------
-
-    clave_hash=$(echo -n "$clave" | sha256sum | cut -d' ' -f1)
-
-    mkdir -p "$USUARIO_DIR/$nombre/evidencias"
-    touch "$USUARIO_DIR/$nombre/registros.csv"
-
-    # -----------------------------
-    # 4. Registrar en archivo maestro
-    # -----------------------------
-    echo "$nombre,$fecha,$clave_hash,$tel" >> "$USUARIO_DIR/lista_usuarios.csv"
-
-    echo -e "${VERDE}Socio '$nombre' registrado exitosamente con fecha de entrega: $fecha.${RESET}"
-    pausa
-}
+#registrar_socio() {
+#    clear
+#      echo -e "${CYAN}====================================${RESET}"
+#      echo -e "${MAGENTA}    REGISTRO DE NUEVO SOCIO    ${RESET}"
+#      echo -e "${CYAN}====================================${RESET}"0
+#
+#
+#    # -----------------------------
+#    # 1. Pedir nombre corto
+#    # -----------------------------
+#    while true; do
+#      read -p "Nombre corto (0 cancelar): " nombre
+#      cancelar_si_solicita "$nombre" || return 0
+#
+#    # Validación: no vacío
+#        [[ -z "$nombre" ]] && 
+#        echo -e "${ROJO}Error: El nombre no puede estar vacío.${RESET}" &&
+#        continue
+#
+#    # Validación: longitud
+#        [[ ${#nombre} -gt 12 ]] &&
+#        echo -e "${ROJO}Error: Máximo 12 caracteres permitidos.${RESET}" &&
+#        continue
+#
+#    # Validación: caracteres permitidos
+#       [[ ! "$nombre" =~ ^[A-Za-z0-9_]+$ ]] &&
+#        echo -e "${ROJO}Error: Solo letras/números/_${RESET} " &&
+#        continue
+#
+#    # Validación: existencia previa
+#    grep -q "^$nombre," "$USUARIO_DIR/lista_usuarios.csv" &&
+#        echo -e "${ROJO}Aviso: Ese nombre ya está registrado.${RESET}" &&
+#        continue
+#    break 
+#  done
+#
+#    # -----------------------------
+#    # 2. Selección de fecha de entrega
+#    # -----------------------------
+#    while true; do
+#      clear
+#      echo ""
+#      echo -e "${CYAN}====================================${RESET}"
+#      echo -e "${MAGENTA}     FECHA DE ENTREGA       ${RESET}"
+#      echo -e "${CYAN}====================================${RESET}"
+#      echo -e "${BLANCO} Seleccione fecha de entrega:${RESET}"
+#
+#      echo -e "${CYAN}1)${RESET} 13 de JUNIO"
+#      echo -e "${CYAN}2)${RESET} 12 de NOVIEMBRE"
+#      echo -e "${CYAN}3)${RESET} 20 de DICIEMBRE"
+#      echo -e "${ROJO}0)${RESET} Cancelar"
+#      read -p "Opción (1/2/3): " opcion
+#
+#      case "$opcion" in
+#        1) fecha="13-JUNIO" ;;
+#        2) fecha="12-NOVIEMBRE" ;;
+#        3) fecha="20-DICIEMBRE" ;;
+#        *) echo -e "${ROJO}Error: Opción inválida.${RESET}"
+#          cancelar_si_solicita "$opcion" || return 0
+#          sleep 2;
+#          continue
+#      esac
+#      break 
+#    done
+#
+#    # =============================================================
+#    #     CONTRASENA
+#    # =============================================================
+#    while true; do
+#      clear
+#      echo -e "${ROJO}(0 para cancelar)${RESET}"
+#      echo -e "${CYAN}====================================${RESET}"
+#      echo -e "${MAGENTA}     CONTRASEÑA         ${RESET} "  
+#      echo -e "${CYAN}====================================${RESET}"
+#
+#      read -p "Defina una contraseña (mínimo 4 caracteres, sin espacios): " clave
+#      cancelar_si_solicita "$clave" || return 0
+#
+#      if [[ -z "$clave" || ${#clave} -lt 4 || "$clave" =~ [[:space:]] ]]; then
+#        echo -e "${ROJO}Error: Contraseña inválida.${RESET}"; sleep 2; continue
+#      fi 
+#      break 
+#    done
+#
+#    #========================================================
+#    #   TELEFONO
+#    #========================================================
+#    while true; do 
+#      clear
+#      echo -e "${ROJO}(0 para cancelar)${RESET}"
+#      echo -e "${CYAN}============================================${RESET}"
+#      echo -e "${MAGENTA}       TELEFONO                ${RESET}"
+#      echo -e "${CYAN}============================================${RESET}"
+#
+#      read -p "Ingresa un numero de telefono:" tel
+#      cancelar_si_solicita "$tel" || return 0
+#
+#      # Validación: no vacio
+#      if [[ -z "$tel" ]]; then        
+#        echo -e "${ROJO}Error: El numero no puede estar vacio.${RESET}"
+#        sleep 2 
+#        continue 
+#      fi  
+#
+#      # Validación: longitud
+#      [[ ! "$tel" =~ ^[0-9]{10}$ ]] &&
+#        echo -e "${ROJO}Error: Maximo 10 caracteres permitidos.${RESET}" &&
+#        continue
+#      
+#      #Validación: caracteres permitidos
+#      if [[ ! "$tel" =~ ^[0-9]+$ ]]; then
+#        echo -e "${ROJO}Error: solo numero.${RESET}"
+#        sleep 2 
+#        continue
+#      fi 
+#
+#      # Validación: existencia previa
+#      cut -d',' -f4 "$USUARIO_DIR/lista_usuarios.csv" | grep -qx "$tel" &&
+#        echo -e "${ROJO}Aviso: Ese numero ya esta en existencia.${RESET}" &&
+#        continue
+#        break 
+#      done
+#
+#    # -----------------------------
+#    # 3. Crear estructura del socio
+#    # -----------------------------
+#
+#    clave_hash=$(echo -n "$clave" | sha256sum | cut -d' ' -f1)
+#
+#    mkdir -p "$USUARIO_DIR/$nombre/evidencias"
+#    touch "$USUARIO_DIR/$nombre/registros.csv"
+#
+#    # -----------------------------
+#    # 4. Registrar en archivo maestro
+#    # -----------------------------
+#    echo "$nombre,$fecha,$clave_hash,$tel" >> "$USUARIO_DIR/lista_usuarios.csv"
+#
+#    echo -e "${VERDE}Socio '$nombre' registrado exitosamente con fecha de entrega: $fecha.${RESET}"
+#    pausa
+#}
 
 # ==========================================
 #   FUNCIÓN: REGISTRAR APORTACIÓN
@@ -726,7 +727,7 @@ while true; do
     read -p "Seleccione una opción: " opcion
 
     case "$opcion" in
-        1) registrar_socio ;;
+        1) crear_usuario ;;
         2) registrar_aportacion ;;
         3) consultar_historial ;;
         4) generar_reporte ;;

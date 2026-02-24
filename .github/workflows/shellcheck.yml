@@ -2,7 +2,11 @@ name: ShellCheck
 
 on:
   push:
+    paths:
+      - 'nota_app/**'
   pull_request:
+    paths:
+      - 'nota_app/**'
 
 jobs:
   shellcheck:
@@ -19,4 +23,5 @@ jobs:
 
       - name: Run shellcheck on app-nota
         run: |
-          shellcheck /nota_app/notas.sh
+          shellcheck nota_app/notas.sh
+
