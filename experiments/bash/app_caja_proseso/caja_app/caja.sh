@@ -5,7 +5,6 @@ IFS=$'\n\t'
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_ROOT"
 
-
 # ==========================================
 #   SISTEMA CAJA DE AHORRO 2026
 #   Modelo 3 + Sistema 2
