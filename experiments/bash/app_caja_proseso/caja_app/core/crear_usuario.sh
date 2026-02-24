@@ -3,7 +3,7 @@
 set -eou pipefail
 IFS=$'\n\t'  
 
-#registrar_socio() {
+crear_usuario() {
   clear
   printf "%b=========================%b\n" "$CYAN" "$RESET"
   printf "%b  Registro de socio nuevo %b\n" "$MAGENTA" "$RESET"
@@ -16,18 +16,17 @@ IFS=$'\n\t'
     cancelar_si_solicita "$nombre" || return 0
 
     # ------ Validación: no vacio -------
-    [[ -z "$nombre" ]] && { err "El nombre no puede estar vacio." pausa; continue; }
+    [[ -z "$nombre" ]] && { err "El nombre no puede estar vacio." continue; }
 
     # ----- Validación: longitud ------
-    [[ ${#nombre} -gt 12 ]] && { err "Error maximo 12 caracteres permitidos." pausa; continue; }
+    [[ ${#nombre} -gt 12 ]] && { err "Error maximo 12 caracteres permitidos." continue; }
 
     # ------ Validación: caracteres permitidos ------
-    [[ ! "$nombre" =~ ^[A-Za-z0-9_]+$ ]] && { err "Error: Solo letras/números/_" pausa; continue; }
+    [[ ! "$nombre" =~ ^[A-Za-z0-9_]+$ ]] && { err "Error: Solo letras/números/_" continue; }
 
     # ------ Validación: existencia previa
     grep -q "^$nombre," "$USUARIO_DIR/lista_usuarios.csv" && 
-      warn "Aviso: Ese nombre ya está registrado" 
-      pausa
+      warn "Aviso: Ese nombre ya está registrado" &&
       continue
       break
     done
@@ -60,10 +59,10 @@ IFS=$'\n\t'
     while true; do 
       clear 
       printf "%b=========================%b\n" "$CYAN" "$RESET"
-      printf "%b Contraseña %b\n" "$MAG4NTA" "$RESETN" 
+      printf "%b Contraseña %b\n" "$MAGENTA" "$RESET" 
       printf "%b=========================%b\n" "$CYAN" "$RESET" 
-      read -r -p "Defina una contraseña (minimo 4 caracteres sin espacio.)" clave 
-      cancelar_si_solicita $clave || return 0 
+      read -r -p "Defina una contraseña (minimo 4 caracteres sin espacio.): " clave 
+      cancelar_si_solicita "$clave" || return 0 
       
       if [[ -z $clave || ${#clave} -lt 4 || "$clave" =~ [[:space:]] ]]; then 
         err "Error: Contraseña invalida."
@@ -85,28 +84,26 @@ IFS=$'\n\t'
 
       # ------ Validación: no vacio ------
       if  [[ -z "$telefono" ]]; then
-        err "El numero no puede estar vacio." &&
-        pausa 
+        err "El numero no puede estar vacio." 
+        sleep 2
         continue
       fi
 
       # ------ Validación: longitud ------
-      [[ ! "telefono" =~ ^[0-9]{10}$ ]] && 
-      err "Error: Maximo 10 caracteres permitidos."
-      pausa 
+      [[ ! "$telefono" =~ ^[0-9]{10}$ ]] && 
+      err "Error: Maximo 10 caracteres permitidos." &&
       continue
 
       # ------ Validación: caracteres permitidos ------
-      if [[ ! "telefono" =~ ^[0-9]+$ ]]; then 
+      if [[ ! "$telefono" =~ ^[0-9]+$ ]]; then 
         err "Error: Solo numeros."
-        pausa 
+        sleep 2
         continue
       fi
       
       # ------ Validación: Existencia previa ------
       cut -d',' -f4 "$USUARIO_DIR/lista_usuarios.scv" | grep -qx "telefono" &&
         warn "Aviso: Ese numero ya esta en eistencia." &&
-        pause 
         continue
         break
     done
@@ -125,5 +122,4 @@ IFS=$'\n\t'
 
   log_info "Registro Socio $nombre"
 
-
-#}
+}

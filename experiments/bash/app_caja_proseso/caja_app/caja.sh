@@ -17,7 +17,7 @@ cd "$PROJECT_ROOT"
 # ==========================================
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/msj.sh"
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/core/crear_usuario.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/logs.sh"
 #   COLORES
 # ==========================================
 #RESET="\e[0m"
@@ -56,7 +56,7 @@ cancelar_si_solicita() {
   return 0 
 }
 crear_usuario() {
-  bash /core/crear_usuario.sh
+  source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/core/crear_usuario.sh"
 }
 # ==========================================
 #   FUNCIÓN: REGISTRAR SOCIO
