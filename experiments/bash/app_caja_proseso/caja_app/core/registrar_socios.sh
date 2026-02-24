@@ -1,22 +1,19 @@
 #!/usr/bin/env bash
 
-# ================================================================ 
-# Nombre: registrar_socio.sh
-# Discripción: registrar socio en caja de ahorro por (Nombre, 
-# Fecha de entrega, Contreseña, Numero de Telefono).
-# Autor: xLuffy025
-# ================================================================ 
-
-# ---------------------------------------------------------------- 
-# MODO ESTRICTO (red de seguridaf)
-# ---------------------------------------------------------------- 
 set -eou pipefail
 IFS=$'\n\t'  
 
-bash lib/colores.sh
-bash lib/msj.sh
+registrar_socio() {
+  clear
+  printf "%b=========================%b\n" "$CYAN" "$RESET"
+  printf "%b  Registro de socio nuevo %b\n" "$MAGENTA" "$RESET"
+  printf "%b=========================%b\n" "$CYAN" "$RESET"
 
-# ----------------------------------------------------------------
-# FUNCIONES DE UTILIDAD
-# ---------------------------------------------------------------- 
-msg "error"
+  # ------ Pedir nombre corto ------
+  
+  while true; do
+
+  
+
+               
+}
