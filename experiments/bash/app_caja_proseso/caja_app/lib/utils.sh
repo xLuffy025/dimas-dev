@@ -42,3 +42,10 @@ cancelar_si_solicita() {
 linea() {
   printf "%b============================================%b\n" "$CYAN" "$RESET"
 }
+
+titulo() {
+  clear
+  linea
+  printf "%b$1%b\n" "$MAGENTA" "$RESET"
+  linea
+}

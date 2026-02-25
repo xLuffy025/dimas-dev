@@ -44,9 +44,7 @@ registrar_aportacion() {
 #   FUNCIÓN: CONSULTAR HISTORIAL
 # ==========================================
 consultar_historial() {
-    clear
-    linea 
-    echo -e "\e[1;35m=== CONSULTAR HISTORIAL DE UN SOCIO ===\e[0m"
+    titulo "CONSULTAR HISTORIAL DE UN SOCIO"
 
     # -----------------------------------------
     # 1. Verificar si hay socios registrados
