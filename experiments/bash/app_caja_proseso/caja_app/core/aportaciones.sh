@@ -31,12 +31,12 @@ while true; do
   while true; do 
     echo ""
     read -r -p "Seleccione el número del socio: " opcion
-    cancelar_si_solicita "opcion" || return 0 
+    cancelar_si_solicita "$opcion" || return 0 
 
-    if [[ ! "$opcion" =~ ^[0-9]+$ ]] || ((opcion > ${#socios[@]})); then
+    if [[ ! "$opcion" =~ ^[1-9]+$ ]] || ((opcion > ${#socios[@]})); then
       err "Error: Selección inválida."
       pausa
-      continue 
+      continue
     fi 
 
     socio="${socios[$((opcion -1))]}"
@@ -128,11 +128,11 @@ while true; do
   # --------------------------------------------------------
   # 8. Confirmación final 
   # --------------------------------------------------------
-  echo -e "\nResumen de la aoprtacion:"
-  echo "Socio: $socio"
-  echo "Monto: $monto"
-  echo "Evidencia: $destino"
-  read -r -p "Confirmar registro? (s/n): " c 
+  printf "%b\nResumen de la aoprtacion:%b\n" "$VERDE" "$RESET"
+  printf "%bSocio:%b $socio\n" "$CYAN" "$RESET"
+  printf "%bMonto:%b $monto\n" "$CYAN" "$RESET"
+  printf "%bEvidencia:%b $destino\n" "$CYAN" "$RESET"
+  read -r -p "Confirmar registro/(s/n): " c 
   [[ "$c" != "s" ]] &&
     warn "Registro cancelado. vuelva al inicio... " &&
     pausa &&
@@ -141,6 +141,7 @@ while true; do
   # --------------------------------------------------------
   # 9. Mensaje Final 
   # --------------------------------------------------------
-  msg "Aportación registrada exitosamente." 
+  msg "Aportación registrada exitosamente."
+  sleep 2
   break
 done
