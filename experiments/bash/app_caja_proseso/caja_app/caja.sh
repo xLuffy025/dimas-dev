@@ -15,7 +15,7 @@ cd "$PROJECT_ROOT"
 # VARIABLES GLOBALES
 # ==========================================
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config.sh"
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/msj.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/utils.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/logs.sh"
 
 # ==========================================
@@ -43,11 +43,11 @@ cancelar_si_solicita() {
     return 1 
   fi 
   return 0 
+}
 
 # ==========================================
 #   FUNCIÓN: REGISTRAR SOCIO
 # ==========================================
-}
 crear_socio() {
   source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/core/crear_socio.sh"
 }
@@ -69,33 +69,33 @@ registrar_aportacion() {
       echo -e "${ROJO}No hay socios registrados.${RESET}" &&
       pausa &&
       return
-   │ # -----------------------------------------
-   │ # 2. Seleccionar socio por número
-   │ # -----------------------------------------
-   │ local socios=()
-   │ local i=1
-   │ while IFS= read -r linea; do
-   │ │ socio_nombre=$(echo "$linea" | cut -d',' -f1)
-   │ │ socios+=("$socio_nombre")
-   │ │ echo "$i) $socio_nombre"
-   │ │ ((i++))
-   │ done < "$USUARIO_DIR/lista_usuarios.csv"
-   │
-   │ while true; do
-   │ │ echo -e "${ROJO}(0 para cancelar)${RESET}"
-   │ │ echo ""
-   │ │ read -p "Seleccione el número del socio: " opcion
-   │ │ cancelar_si_solicita "$opcion" || return 0
-   │ │
-   │ │ if [[ ! "$opcion" =~ ^[0-9]+$ ]] || ((opcion < 1 || opcion > ${#socios[@]})); then
-   │ │ │ echo -e "${ROJO}Error: Selección inválida.${RESET}"
-   │ │ │ pausa
-   │ │ │ continue
-   │ │ fi
-   │ │
-   │ │ socio="${socios[$((opcion-1))]}"
-   │ │ break
-   │ done
+    # -----------------------------------------
+    # 2. Seleccionar socio por número
+    # -----------------------------------------
+    local socios=()
+    local i=1
+    while IFS= read -r linea; do
+      socio_nombre=$(echo "$linea" | cut -d',' -f1)
+      socios+=("$socio_nombre")
+      echo "$i) $socio_nombre"
+      ((i++))
+    done < "$USUARIO_DIR/lista_usuarios.csv"
+
+    while true; do
+      echo -e "${ROJO}(0 para cancelar)${RESET}"
+      echo ""
+      read -p "Seleccione el número del socio: " opcion
+      cancelar_si_solicita "$opcion" || return 0
+
+      if [[ ! "$opcion" =~ ^[0-9]+$ ]] || ((opcion < 1 || opcion > ${#socios[@]})); then
+        echo -e "${ROJO}Error: Selección inválida.${RESET}"
+        pausa
+        continue
+      fi
+
+      socio="${socios[$((opcion-1))]}"
+      break
+    done
     # -----------------------------------------
     # 3. Pedir monto
     # -----------------------------------------
