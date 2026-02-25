@@ -15,7 +15,7 @@ cd "$PROJECT_ROOT"
 # VARIABLES GLOBALES
 # ==========================================
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config.sh"
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/utils.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/decor.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/logs.sh"
 
 # ==========================================
