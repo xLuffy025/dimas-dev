@@ -30,7 +30,9 @@ command -v bc >/dev/null || {
 #     FUNCIONES GENERALES
 # ==========================================
 pausa() {
-  read -p "Presione ENTER para continuar..."
+    read -p "Presione ENTER para continuar..."
+    tput cuu1   # subir 1 línea
+    tput el     # borrar línea
 }
 
 cancelar_si_solicita() {

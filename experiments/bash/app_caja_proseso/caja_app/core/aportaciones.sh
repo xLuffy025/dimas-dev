@@ -2,8 +2,8 @@
 set -eou pipefail
 IFS=$'\n\t'
 
-clear
 while true; do 
+  clear
   printf "%b==============================%b\n" "$CYAN" "$RESET"
   printf "%b Registrar aportaciones  %b\n" "$MAGENTA" "$RESET"
   printf "%b==============================%b\n" "$CYAN" "$RESET"
@@ -17,7 +17,7 @@ while true; do
     return 
 
   # ------------------------------------------------------
-  # 2. Seleccionar socio pr número 
+  # 2. Seleccionar socio por número 
   # ------------------------------------------------------
   socios=() 
   i=1
@@ -28,7 +28,7 @@ while true; do
     ((i++))
   done < "$USUARIO_DIR/lista_usuarios.csv"
 
-  while true; do 
+  while true; do
     echo ""
     read -r -p "Seleccione el número del socio: " opcion
     cancelar_si_solicita "$opcion" || return 0 
@@ -36,7 +36,7 @@ while true; do
     if [[ ! "$opcion" =~ ^[1-9]+$ ]] || ((opcion > ${#socios[@]})); then
       err "Error: Selección inválida."
       pausa
-      continue
+      return 0 
     fi 
 
     socio="${socios[$((opcion -1))]}"
