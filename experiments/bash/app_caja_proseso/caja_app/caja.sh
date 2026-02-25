@@ -33,10 +33,6 @@ pausa() {
   read -p "Presione ENTER para continuar..."
 }
 
-log() {
-  echo "$(date '+%F %T') - $1" >> "$LOG_FILE"
-}
-
 cancelar_si_solicita() {
   local valor="$1"
   if [[ "$valor" == "0" ]]; then 
