@@ -56,133 +56,7 @@ crear_socio() {
 #   FUNCIÓN: REGISTRAR APORTACIÓN
 # ==========================================
 registrar_aportacion() {
-  clear
-  while true; do
-    echo -e "${CYAN}====================================${RESET}"
-    echo -e "${MAGENTA}=== REGISTRAR APORTACIÓN ===${RESET}"
-    echo -e "${CYAN}====================================${RESET}"
-
-    # -----------------------------------------
-    # 1. Verificar si hay socios registrados
-    # -----------------------------------------
-    [[ ! -s "$USUARIO_DIR/lista_usuarios.csv" ]] &&
-      echo -e "${ROJO}No hay socios registrados.${RESET}" &&
-      pausa &&
-      return
-    # -----------------------------------------
-    # 2. Seleccionar socio por número
-    # -----------------------------------------
-    local socios=()
-    local i=1
-    while IFS= read -r linea; do
-      socio_nombre=$(echo "$linea" | cut -d',' -f1)
-      socios+=("$socio_nombre")
-      echo "$i) $socio_nombre"
-      ((i++))
-    done < "$USUARIO_DIR/lista_usuarios.csv"
-
-    while true; do
-      echo -e "${ROJO}(0 para cancelar)${RESET}"
-      echo ""
-      read -p "Seleccione el número del socio: " opcion
-      cancelar_si_solicita "$opcion" || return 0
-
-      if [[ ! "$opcion" =~ ^[0-9]+$ ]] || ((opcion < 1 || opcion > ${#socios[@]})); then
-        echo -e "${ROJO}Error: Selección inválida.${RESET}"
-        pausa
-        continue
-      fi
-
-      socio="${socios[$((opcion-1))]}"
-      break
-    done
-    # -----------------------------------------
-    # 3. Pedir monto
-    # -----------------------------------------
-    while true; do
-      clear
-      echo -e "${ROJO}(0 para cancelar)${RESET}"
-      read -p "Monto a registrar: " monto
-      cancelar_si_solicita "$monto" || return 0
-
-      # Validación numérica
-      [[ ! "$monto" =~ ^[0-9]+(\.[0-9]+)?$ ]] && 
-      echo -e "${ROJO}Error: El monto debe ser numérico.${RESET}" &&
-      continue
-         
-      # validación de rango
-      (( $(echo "$monto < 50 || $monto > 5000" || bc -l ) )) &&
-      echo -e "${ROJO}Error: El monto mínimo es $minimo.${RESET}" &&
-      continue
-      break 
-    done 
-        
-    # -----------------------------------------
-    # 4. Pedir evidencia
-    # -----------------------------------------
-    while true; do
-      clear
-      echo -e "${ROJO}(0 para cancelar)${RESET}"
-      read -p "Ruta de evidencia o link (https://): " evidencia
-      cancelar_si_solicita "$evidencia" || return 0
-
-      # Si es link, se guarda tal cual
-      if [[ "$evidencia" =~ ^https?:// ]]; then
-      destino="$evidencia"
-
-      else
-          
-      # Validar archivo local
-      if [[ ! -f "$evidencia" ]]; then
-        echo -e "${ROJO}Error: El archivo no existe.${RESET}"
-        sleep 2
-        continue
-      fi 
-      
-      ts=$(date +"%F_%H_%M_%S")
-      destino="$USUARIO_DIR/$socio/evidencias/$ts.${evidencia##*.}"
-      cp "$evidencia" "$destino"
-      fi 
-      break 
-  done 
-    
-    # -----------------------------------------
-    # 5. Copiar evidencia
-    # -----------------------------------------
-    fecha=$(date +"%F")
-
-    # -----------------------------------------
-    # 6. Registrar en CSV individual
-    # -----------------------------------------
-    echo "$fecha,$monto,$destino" >> "$USUARIO_DIR/$socio/registros.csv"
-  
-    # -----------------------------------------
-    # 7. Registrar en historial general
-    # -----------------------------------------
-    echo "$fecha,$socio,$monto,$destino" >> "$DATA_DIR/historial_general.csv"
-
-    log "Aportación $monto de $socio"
-  
-    # -----------------------------------------
-    # 8. Confirmacion final
-    # -----------------------------------------
-    echo -e "\nResumen de la aportacion:"
-    echo "Socio: $socio"
-    echo "Monto: $monto"
-    echo "Evidencia $destino"
-    read -p "Confimar registro? (s/n): " c 
-    [[ "$c" != "s" ]] &&
-    echo -e "${ROJO}Registro cancelado. Volviendo al inicio...${RESET}" &&
-    pausa &&
-    continue
-
-    # ------------------------------------------
-    # 9.  Mensaje final
-    # ------------------------------------------
-
-    echo -e "${VERDE}Aportación registrada exitosamente.${RESET}"
-    break 
-  done 
+  source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/core/aportaciones.sh"
 }
   
 # ==========================================
@@ -201,7 +75,7 @@ consultar_historial() {
         return
     fi
 
-    echo -e "\e[1;36mSocios disponibles:\e[0m"
+    echo -e "\e[1;36mSoci:;os disponibles:\e[0m"
     nl -w2 -s") " "$USUARIO_DIR/lista_usuarios.csv" | cut -d',' -f1
 
     # -----------------------------------------

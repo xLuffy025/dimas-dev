@@ -60,10 +60,13 @@ while true; do
       pausa
       continue
 
-    else  
+    else
+
       #Validación de rango 
-      if (( $(echo "$monto < 50 || $monto > 5000" || bc -l ) )); then 
-        err "Error: El monto minimones $minimo." && 
+      minimo=50
+      maximo=5000
+      if (( $(echo "$monto < $minimo || $monto > $maximo" | bc -l ) )); then 
+        err "Error: El monto mínimo es $minimo y el máximo es $maximo." && 
           pausa 
         continue
       fi
