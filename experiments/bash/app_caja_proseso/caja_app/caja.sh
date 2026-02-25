@@ -15,7 +15,7 @@ cd "$PROJECT_ROOT"
 # VARIABLES GLOBALES
 # ==========================================
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config.sh"
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/decor.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/utils.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/logs.sh"
 
 # ==========================================
@@ -24,23 +24,6 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/logs.sh"
 command -v bc >/dev/null || {
   echo "Error: bc no está instalado (install bc)"
   exit 1
-}
-
-# ==========================================
-#     FUNCIONES GENERALES
-# ==========================================
-pausa() {
-    read -p "Presione ENTER para continuar..."
-    tput cuu1   # subir 1 línea
-    tput el     # borrar línea
-}
-
-cancelar_si_solicita() {
-  local valor="$1"
-  if [[ "$valor" == "0" ]]; then 
-    return 1 
-  fi 
-  return 0 
 }
 
 # ==========================================
@@ -62,6 +45,7 @@ registrar_aportacion() {
 # ==========================================
 consultar_historial() {
     clear
+    linea 
     echo -e "\e[1;35m=== CONSULTAR HISTORIAL DE UN SOCIO ===\e[0m"
 
     # -----------------------------------------
@@ -73,7 +57,7 @@ consultar_historial() {
         return
     fi
 
-    echo -e "\e[1;36mSoci:;os disponibles:\e[0m"
+    echo -e "\e[1;36mSocios disponibles:\e[0m"
     nl -w2 -s") " "$USUARIO_DIR/lista_usuarios.csv" | cut -d',' -f1
 
     # -----------------------------------------
