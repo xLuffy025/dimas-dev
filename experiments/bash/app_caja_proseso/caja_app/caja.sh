@@ -44,76 +44,8 @@ registrar_aportacion() {
 #   FUNCIÓN: CONSULTAR HISTORIAL
 # ==========================================
 consultar_historial() {
-    titulo "CONSULTAR HISTORIAL DE UN SOCIO"
-
-    # -----------------------------------------
-    # 1. Verificar si hay socios registrados
-    # -----------------------------------------
-    if [[ ! -s "$USUARIO_DIR/lista_usuarios.csv" ]]; then
-        echo -e "\e[1;31mNo hay socios registrados.\e[0m"
-        sleep 2
-        return
-    fi
-
-    echo -e "\e[1;36mSocios disponibles:\e[0m"
-    nl -w2 -s") " "$USUARIO_DIR/lista_usuarios.csv" | cut -d',' -f1
-
-    # -----------------------------------------
-    # 2. Seleccionar socio
-    # -----------------------------------------
-    echo ""
-    read -p "Ingrese el nombre corto del socio: " socio
-
-    if ! grep -E "^$socio," "$USUARIO_DIR/lista_usuarios.csv" >/dev/null 2>&1; then
-        echo -e "\e[1;31mError: El socio no existe.\e[0m"
-        sleep 2
-        return
-    fi
-
-    archivo="$USUARIO_DIR/$socio/registros.csv"
-
-    # -----------------------------------------
-    # 3. Validar si tiene registros
-    # -----------------------------------------
-    if [[ ! -s "$archivo" ]]; then
-        echo -e "\e[1;33mEl socio '$socio' no tiene aportaciones registradas.\e[0m"
-        sleep 3
-        return
-    fi
-
-    # -----------------------------------------
-    # 4. Mostrar historial
-    # -----------------------------------------
-    echo ""
-    echo -e "\e[1;34mHistorial de aportaciones de: $socio\e[0m"
-    echo -e "\e[1;34m----------------------------------------\e[0m"
-
-    total=0
-    contador=0
-    ultima_fecha="N/A"
-
-    while IFS=',' read -r fecha monto evidencia; do
-        echo -e "\e[1;32mFecha:\e[0m $fecha"
-        echo -e "\e[1;32mMonto:\e[0m $monto"
-        echo -e "\e[1;32mEvidencia:\e[0m $evidencia"
-        echo "----------------------------------------"
-
-        total=$(echo "$total + $monto" | bc)
-        contador=$((contador + 1))
-        ultima_fecha="$fecha"
-    done < "$archivo"
-
-    # -----------------------------------------
-    # 5. Resumen final
-    # -----------------------------------------
-    echo ""
-    echo -e "\e[1;36mResumen del socio: $socio\e[0m"
-    echo -e "\e[1;33mTotal aportado:\e[0m $total"
-    echo -e "\e[1;33mNúmero de aportaciones:\e[0m $contador"
-    echo -e "\e[1;33mÚltima aportación:\e[0m $ultima_fecha"
-
-    echo ""
-    pausa
+  source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/core/consultar.sh"
+    
 }
 
 # ==========================================
