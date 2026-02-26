@@ -2,6 +2,8 @@
 set -eou pipefail
 IFS=$'\n\t'
 
+SEPARADOR="===================================="
+
 #----------------------------------------------------
 # Colores 
 #----------------------------------------------------
@@ -40,12 +42,23 @@ cancelar_si_solicita() {
 # Funciones de interfas 
 # ----------------------------------------------------
 linea() {
-  printf "%b============================================%b\n" "$CYAN" "$RESET"
+  # Imprime la liena usando la variable pura y le aplica el color 
+  printf "%b%s%b\n" "$CYAN" "$SEPARADOR" "$RESET"
 }
 
 titulo() {
-  clear
+  clear 
   linea
-  printf "%b$1%b\n" "$MAGENTA" "$RESET"
+
+  local ancho_menu=${#SEPARADOR}
+  local texto="$1"
+  local longitud=${#texto}
+
+  # Cálculo para centrar
+  local padding=$(( (ancho_menu + longitud)/2))
+
+  # Imprime el texto centrado con color 
+  printf "%b%*s%b\n" "$MAGENTA" $padding "$texto" "$RESET"
+
   linea
 }
