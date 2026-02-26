@@ -18,7 +18,7 @@ BLANCO="\e[97m"
 # ---------------------------------------------------
 # Funciones de mensajes 
 # ---------------------------------------------------
-msg() { printf "%b===>%b %s\n" "$CYAN" "$RESET" "$1"; }
+msg(){ printf "%b===>%b %s\n" "$CYAN" "$RESET" "$1"; }
 ok(){ printf "%b [✅]%b %s\n" "$VERDE" "$RESET" "$1"; }
 warn(){ printf "%b[!]>%b %s\n" "$AMARILLO" "$RESET" "$1"; } 
 err(){ printf "%b[❌]%b %s\n" "$ROJO" "$RESET" "$1"; }
@@ -41,9 +41,15 @@ cancelar_si_solicita() {
 }
 
 confirmar() {
-  read 
+  local mensaje="$1"
+  read -r -p "¿${mensaje}? (s/n): " respuesta
+  
+  if [[ "$respuesta" == "s" || "$respuesta" == "S" ]]; then
+    return 0  # Confirmado
+  else
+    return 1  # Cancelado
+  fi
 }
-
 # ----------------------------------------------------
 # Funciones de interfas 
 # ----------------------------------------------------
