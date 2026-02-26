@@ -6,25 +6,7 @@ while true; do
   clear
   titulo "Registrar aportaciones"
 
-  # -------------------------------------------------------
-  # 1. Verificar si ahi socio registrados 
-  # -------------------------------------------------------
-  [[ ! -s "$USUARIO_DIR/lista_usuarios.csv" ]] &&
-    warn "No hay socios registrados." &&
-    pausa &&
-    return 
-
-  # ------------------------------------------------------
-  # 2. Seleccionar socio por número 
-  # ------------------------------------------------------
-  local socios=() 
-  loca i=1
-  while IFS= read -r linea; do
-    socio_nombre=$(echo "$linea" | cut -d',' -f1)
-    socios+=("$socio_nombre")
-    echo "$i) $socio_nombre"
-    ((i++))
-  done < "$USUARIO_DIR/lista_usuarios.csv"
+  confirmar_socios 
 
   while true; do
     echo ""
@@ -120,20 +102,27 @@ while true; do
   # --------------------------------------------------------
   # 8. Confirmación final 
   # --------------------------------------------------------
-  printf "%b\nResumen de la aoprtacion:%b\n" "$VERDE" "$RESET"
-  printf "%bSocio:%b $socio\n" "$CYAN" "$RESET"
-  printf "%bMonto:%b $monto\n" "$CYAN" "$RESET"
-  printf "%bEvidencia:%b $destino\n" "$CYAN" "$RESET"
-  read -r -p "Confirmar registro/(s/n): " c 
-  [[ "$c" != "s" ]] &&
-    warn "Registro cancelado. vuelva al inicio... " &&
-    pausa &&
-    continue 
+  printf "%b\nResumen de la aportación:%b\n" "$VERDE" "$RESET"
 
-  # --------------------------------------------------------
-  # 9. Mensaje Final 
-  # --------------------------------------------------------
-  msg "Aportación registrada exitosamente."
-  sleep 2
-  break
+  mostrar_datos "Socio:" "$socio" 
+  mostrar_datos "Monto:" "$monto"
+  mostrar_datos "Evidencia:" "$destino"
+
+  echo ""
+  
+  if confirmar "Confirmar registro de la aportación"; then
+    
+    # Si el usuario dijo "s", entra quí 
+    msg "Aportación registrada exitosamente."
+    sleep 2
+    break 
+    
+  else
+    
+    # si el usuario dijo "n" o cualquier otra cosa, entra aquí
+    warn "Registro cancelado. Volviendo al inicio"
+    pausa
+    continue
+
+  fi
 done

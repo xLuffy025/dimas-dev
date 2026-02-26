@@ -9,12 +9,9 @@ titulo "Registro de socio nuevo"
 # 1. Pedir nombre corto
 # -----------------------------
 while true; do
-  read -r -p "Nombre corto (0 cancelar): " nombre
+  read -r -p "Nombre corto (0 cancelar): " nombre 
+  cancelar_si_solicita "$nombre" || return 0
 
-  if cancelar_si_solicita; then 
-    return 0
-  fi
-  
   # Validación: no vacío
   [[ -z "$nombre" ]] && 
     err "Error: El nombre no puede estar vacío." &&
@@ -115,7 +112,11 @@ touch "$USUARIO_DIR/$nombre/registros.csv"
 # -----------------------------
 echo "$nombre,$fecha,$clave_hash,$tel" >> "$USUARIO_DIR/lista_usuarios.csv"
 
+# ------------------------------------------
+# Confirmación final 
+# ------------------------------------------
 msg "Socio '$nombre' registrado exitosamente con fecha de entrega: $fecha."
 pausa
+
 
 log_info "Registro Socio $nombre"

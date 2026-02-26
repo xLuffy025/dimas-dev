@@ -31,25 +31,51 @@ pausa() {
 }
 
 cancelar_si_solicita() {
-  read -r -p "¿Cancelar? (0 para concelar): " opcion
-  
-  if [[ "$opcion" == "0" ]]; then
+  local valor="$1"
+  if [[ "$valor" == "0" ]]; then
     log_warn "Operación cancelada por el usuario"
-    return 0 
+    return 1
   fi
-  return 1
+  return 0
 }
 
 confirmar() {
   local mensaje="$1"
-  read -r -p "¿${mensaje}? (s/n): " respuesta
-  
-  if [[ "$respuesta" == "s" || "$respuesta" == "S" ]]; then
+  local respuesta 
+
+  # Imprime la pregunta en amarillo para que resalte, sin salto de linea al final
+  printf "%b¿%s? (s/n): %b" "$AMARILLO" "$mensaje" "$RESET"
+  read -r respuesta
+
+  # ${respuesta,,} convierte lo que escriba el usuario a minúscula automaticamente
+  if [[ "${respuesta,,}" == "s" ]]; then
     return 0  # Confirmado
   else
     return 1  # Cancelado
   fi
 }
+
+# -------------------------------------------------------
+# confirmaciones
+# -------------------------------------------------------
+confirmar_socios() {
+  # Verificar si ahi socio registrados 
+  [[ ! -s "$USUARIO_DIR/lista_usuarios.csv" ]] &&
+    warn "No hay socios registrados." &&
+    pausa && 
+    return
+
+  # Seleccionar socio por número 
+  local socio=()
+  local i=1
+  while IFS= read -r linea; do 
+    socio_nombre=$(echo "$linea" | cut -d',' -f1)
+    socios+=("$socio_nombre")
+    echo "$i) $socio_nombre"
+    ((i++))
+  done < "$USUARIO_DIR/lista_usuarios.csv"
+}
+
 # ----------------------------------------------------
 # Funciones de interfas 
 # ----------------------------------------------------
@@ -73,4 +99,14 @@ titulo() {
   printf "%b%*s%b\n" "$MAGENTA" $padding "$texto" "$RESET"
 
   linea
+}
+
+mostrar_datos() {
+  # Imprime datos en formatos "Etiqueta: Valor" con alineación
+  local etiqueta="$1"
+  local valor="$2"
+
+  # %-12s le dice a bash: "Ocupare 12 espacios de alineados a la izquierda"
+  # Esto hace que todas las etiquetas terminen en la misma columna.
+  printf "%b%-12s%b %s\n" "$CYAN" "$etiqueta" "$RESET" "$valor"
 }
