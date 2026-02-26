@@ -84,6 +84,9 @@ linea() {
   printf "%b%s%b\n" "$CYAN" "$SEPARADOR" "$RESET"
 }
 
+linea_simple() {
+  printf "%b-------------------------------------%b\n" "$CYAN" "$RESET"
+}
 titulo() {
   clear 
   linea
@@ -101,6 +104,26 @@ titulo() {
   linea
 }
 
+
+item_menu() {
+  # Guarda los parámetros que le pasamos a ls fúncion 
+  local num="$1"
+  local texto="$2"
+
+  # Definimos el azul como color por defecto para los números
+  local color_num="$AZUL"
+
+  # Condicional para cambiar en opciones especiales 
+  if [[ "$num" == "7" ]]; then 
+    color_num="$AMARILLO"
+  elif [[ "$num" == "0" ]]; then  
+    color_num="$ROJO"
+  fi 
+
+  # Imprimimos la linea formateada usando printf 
+  printf "%b%s)%b %s\n" "$color_num" "$num" "$RESET" "$texto"
+
+}
 mostrar_datos() {
   # Imprime datos en formatos "Etiqueta: Valor" con alineación
   local etiqueta="$1"

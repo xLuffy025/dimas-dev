@@ -103,6 +103,7 @@ while true; do
   # 8. Confirmación final 
   # --------------------------------------------------------
   printf "%b\nResumen de la aportación:%b\n" "$VERDE" "$RESET"
+  linea_simple
 
   mostrar_datos "Socio:" "$socio" 
   mostrar_datos "Monto:" "$monto"

@@ -397,16 +397,6 @@ enviar_whatsapp() {
      break
   done
 }
-    
-# ==========================================
-#   FUNCIÓN: RESPALDOS
-# ==========================================
-respaldar() {
-    clear
-    echo -e "\e[1;34m=== RESPALDOS AUTOMÁTICOS ===\e[0m"
-    echo "Módulo en construcción..."
-    sleep 2
-}
 
 # ==========================================
 #   FUNCIÓN: CONFIGURACIÓN
@@ -423,19 +413,16 @@ configuracion() {
 # ==========================================
 while true; do
     clear
-    echo -e "${CYAN}==========================================${RESET}"
-    echo -e "${MAGENTA}    SISTEMA CAJA DE AHORRO 2026 ${RESET}"
-    echo -e "${CYAN}==========================================${RESET}"
-    echo -e "${AZUL}1)${RESET} Registrar socio"
-    echo -e "${AZUL}2)${RESET} Registrar aportación"
-    echo -e "${AZUL}3)${RESET} Consultar historial"
-    echo -e "${AZUL}4)${RESET} Generar reporte del periodo"
-    echo -e "${AZUL}5)${RESET} Generar reporte individual"
-    echo -e "${AZUL}6)${RESET} Enviar reporte por WhatsApp"
-    echo -e "${AZUL}7)${RESET} Respaldar información"
-    echo -e "${AMARILLO}8)${RESET} Configuración"
-    echo -e "${ROJO}0)${RESET} Salir"
-    echo -e "${CYAN}------------------------------------------${RESET}"
+    titulo "SISTEMA CAJA DE AHORRO 2026"
+    item_menu "1" "Registrar socio"
+    item_menu "2" "Registrar aportación"
+    item_menu "3" "Consultar historial"
+    item_menu "4" "Generar reporte del periodo"
+    item_menu "5" "Generar reporte individual"
+    item_menu "6" "Enviar reporte por WhatsApp"
+    item_menu "7" "Configuración"
+    item_menu "0" "Salir"
+    linea_simple
     read -p "Seleccione una opción: " opcion
 
     case "$opcion" in

@@ -40,11 +40,12 @@ done
 while true; do 
   titulo "Fecha de entrega"
   
-  echo -e "1) 13 de Junio"
-  echo -e "2) 12 de Noviembre"
-  echo -e "3) 20 de Diciembre"
-  echo -e "0) Cancelar"
+  item_menu "1" "13 de Junio"
+  item_menu "2" "12 de Noviembre"
+  item_menu "3" "20 de Diciembre"
+  item_menu "0" "Cancelar"
   read -r -p "Opción (1/2/3/0): " opt
+  linea_simple
 
   case "$opt" in 
     1) fecha="13-Junio" ;;
@@ -112,11 +113,33 @@ touch "$USUARIO_DIR/$nombre/registros.csv"
 # -----------------------------
 echo "$nombre,$fecha,$clave_hash,$tel" >> "$USUARIO_DIR/lista_usuarios.csv"
 
-# ------------------------------------------
-# Confirmación final 
-# ------------------------------------------
-msg "Socio '$nombre' registrado exitosamente con fecha de entrega: $fecha."
-pausa
+# --------------------------------------------------------
+# 8. Confirmación final 
+# --------------------------------------------------------
+clear
+printf "%b\nRegistro de usuario:%b\n" "$VERDE" "$RESET"
+linea_simple
+
+mostrar_datos "Nombre:" "$nombre" 
+mostrar_datos "Fecha de entrega:" "$fecha"
+mostrar_datos "Telefono:" "$tel"
+mostrar_datos "Contraseña:" "$clave"
+
+echo ""
+if confirmar "Confirmar registro de la aportación"; then
+     
+    # Si el usuario dijo "s", entra quí 
+    msg "Aportación registrada exitosamente."
+    sleep 3
+    break 
+
+  else
+    
+    # si el usuario dijo "n" o cualquier otra cosa, entra aquí
+    warn "Registro cancelado. Volviendo al inicio"
+    pausa
+    continue
+fi
 
 
-log_info "Registro Socio $nombre"
+log_info "Registro Socio $nombre $fecha $tel $clave"
