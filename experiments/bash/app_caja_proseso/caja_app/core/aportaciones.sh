@@ -4,9 +4,7 @@ IFS=$'\n\t'
 
 while true; do 
   clear
-  printf "%b==============================%b\n" "$CYAN" "$RESET"
-  printf "%b Registrar aportaciones  %b\n" "$MAGENTA" "$RESET"
-  printf "%b==============================%b\n" "$CYAN" "$RESET"
+  titulo "Registrar aportaciones"
 
   # -------------------------------------------------------
   # 1. Verificar si ahi socio registrados 
@@ -19,8 +17,8 @@ while true; do
   # ------------------------------------------------------
   # 2. Seleccionar socio por número 
   # ------------------------------------------------------
-  socios=() 
-  i=1
+  local socios=() 
+  loca i=1
   while IFS= read -r linea; do
     socio_nombre=$(echo "$linea" | cut -d',' -f1)
     socios+=("$socio_nombre")
@@ -47,10 +45,7 @@ while true; do
   # 3. Pedir monto 
   # -------------------------------------------------------
   while true; do 
-    clear 
-    printf "%b=============================%b\n" "$CYAN" "$RESET"
-    printf "%b  Aportaciones  %b\n" "$MAGENTA" "$RESET"
-    printf "%b=============================%b\n" "$CYAN" "$RESET"
+    titulo "Aportaciones"
     read -r -p "Monto a registrar: " monto 
     cancelar_si_solicita "$monto" || return 0 
 
@@ -79,10 +74,7 @@ while true; do
   # 4. Pedir evidencia
   # --------------------------------------------------------
   while true; do
-    clear 
-    printf "%b=============================%b\n" "$CYAN" "$RESET"
-    printf "%b links de evidencia   %b\n" "$MAGENTA" "$RESET"
-    printf "%b=============================%b\n" "$CYAN" "$RESET"
+    titulo "Links de evidencia"
     read -r -p "Ruta de evidencia o link (https://): " evidencia
     cancelar_si_solicita "$evidencia" || return 0
 

@@ -13,7 +13,7 @@ VERDE="\e[32m"
 AMARILLO="\e[33m"
 AZUL="\e[34m"
 MAGENTA="\e[35m"
-CYAN="\e[36m"
+CYAN="\e[36m":
 BLANCO="\e[97m"
 # ---------------------------------------------------
 # Funciones de mensajes 
@@ -31,11 +31,17 @@ pausa() {
 }
 
 cancelar_si_solicita() {
-  local valor="$1"
-  if [[ "$valor" == "0" ]]; then 
-    return 1 
+  read -r -p "¿Cancelar? (0 para concelar): " opcion
+  
+  if [[ "$opcion" == "0" ]]; then
+    log_warn "Operación cancelada por el usuario"
+    return 0 
   fi
-  return 0
+  return 1
+}
+
+confirmar() {
+  read 
 }
 
 # ----------------------------------------------------

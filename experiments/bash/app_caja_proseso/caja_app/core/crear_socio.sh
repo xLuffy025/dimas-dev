@@ -10,8 +10,11 @@ titulo "Registro de socio nuevo"
 # -----------------------------
 while true; do
   read -r -p "Nombre corto (0 cancelar): " nombre
-  cancelar_si_solicita "$nombre" || return 0
 
+  if cancelar_si_solicita; then 
+    return 0
+  fi
+  
   # Validación: no vacío
   [[ -z "$nombre" ]] && 
     err "Error: El nombre no puede estar vacío." &&
