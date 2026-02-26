@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set eou pipefail
+set -euo pipefail
 IFS=$'\n\t'
   
 # ==========================================
@@ -48,7 +48,7 @@ total=0
 contador=0
 ultima_fecha="N/A"
 
-while IFS=',' read -r fecha monto evidencia; do 
+while IFS=',' read -r fecha _ monto evidencia; do 
   mostrar_datos "Fecha:" "$fecha"
   mostrar_datos "Monto:" "$monto"
   mostrar_datos "Evidencia:" "$evidencia"

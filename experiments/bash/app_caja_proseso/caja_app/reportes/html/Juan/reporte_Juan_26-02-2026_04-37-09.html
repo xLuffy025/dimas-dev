@@ -1,74 +1,5 @@
-#!/bin/bash
-
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/config.sh"
-
-
-SOCIO="$1"
-
-if [[ -z "$SOCIO" ]]; then
-    echo "Debes indicar un socio. Ejemplo: ./reporte_individual.sh juan_01"
-    exit 1
-fi
-
-
-CSV=$(REGISTROS_CSV "$SOCIO")
-LISTA="$LISTA_USUARIOS"
-DIR="$REPORTES_DIR/$SOCIO"
-mkdir -p "$DIR"
-
-FECHA=$(date +"%d-%m-%Y_%H-%M-%S")
-OUT="$DIR/reporte_${SOCIO}_${FECHA}.html"
-
-# Validar socio
-if ! grep -E "^$SOCIO," "$LISTA" >/dev/null 2>&1; then
-    echo "El socio '$SOCIO' no existe."
-    exit 1
-fi
-
-# Obtener fecha de entrega y contraseña
-FECHA_ENTREGA=$(grep "^$SOCIO," "$LISTA" | cut -d',' -f2)
-CLAVE=$(grep "^$SOCIO," "$LISTA" | cut -d',' -f3)
-
-# Validar CSV
-if [[ ! -s "$CSV" ]]; then
-    TOTAL="0.00"
-    APORTES=0
-    ULTIMA="N/A"
-else
-    TOTAL=$(awk -F',' '{s+=$3} END{printf "%.2f",s}' "$CSV")
-    APORTES=$(awk -F',' 'END{print NR}' "$CSV")
-    ULTIMA=$(tail -n 1 "$CSV" | cut -d',' -f1)
-fi
-
-MINIMO=50
-MAXIMO=5000
-
-# Validar cumplimiento
-CUMPLE="si"
-
-while IFS=',' read -r fecha _ monto evidencia; do
-    # Si alguna aportación es menor al mínimo
-    if (( $(echo "$monto < $MINIMO" | bc -l) )); then
-        CUMPLE="no"
-    fi
-
-    # Si alguna aportación es mayor al máximo
-    if (( $(echo "$monto > $MAXIMO" | bc -l) )); then
-        CUMPLE="no"
-    fi
-done < "$CSV"
-
-if [[ "$CUMPLE" == "si" ]]; then
-    BADGE="<span class='badge-ok'>Al día</span>"
-else
-    BADGE="<span class='badge-late'>Fuera de rango</span>"
-fi
-
-
-# Generar HTML
-{
-echo "<html><head><meta charset='UTF-8'><title>Reporte de $SOCIO</title>"
-echo "<style>
+<html><head><meta charset='UTF-8'><title>Reporte de Juan</title>
+<style>
 
 /* ======== ESTILO CHADRACULA‑ENVONDEV ======== */
 
@@ -197,48 +128,36 @@ a:hover {
     box-shadow: 0 0 15px #bd93f9;
 }
 
-</style>"
-
-echo "</head><body>"
-
-echo "<div id='login' style='text-align:center; margin-top:50px;'>
+</style>
+</head><body>
+<div id='login' style='text-align:center; margin-top:50px;'>
 <h2>Reporte protegido</h2>
 <p>Ingresa tu clave personal</p>
 <input type='password' id='pass' placeholder='Contraseña' style='padding:8px; font-size:16px;'>
 <button onclick='checkPass()' style='padding:8px 16px; font-size:16px;'>Entrar</button>
-</div>"
-
-echo "<div id='contenido' style='display:none;'>"
-echo "<img src='https://img.freepik.com/vector-premium/caja-ahorros-monedas_773186-1394.jpg' class='logo'>" 
-echo "<h1>Estado de cuenta: $SOCIO</h1>"
-echo "<small>Generado: $(date +'%d-%m-%Y %H:%M')</small><br>"
-echo "<small>Fecha de entrega: $FECHA_ENTREGA</small><br>"
-echo "<small>Aportes: $APORTES — Total: $TOTAL</small><br>"
-echo "$BADGE<br><br>"
-
-# Tabla
-echo "<table><thead><tr><th>Fecha</th><th>Monto</th><th>Evidencia</th></tr></thead><tbody>"
-
-if [[ -s "$CSV" ]]; then
-    while IFS=',' read -r fecha _ monto evidencia; do
-
-        # Si es link, mostrarlo como enlace clicable
-        if [[ "$evidencia" =~ ^https?:// ]]; then
-            link="<a href='$evidencia' target='_blank'>Ver imagen</a>"
-        else
-            link="$evidencia"
-        fi
-
-        echo "<tr><td>$fecha</td><td>$monto</td><td>$link</td></tr>"
-    done < "$CSV"
-fi
-
-echo "</tbody><tfoot><tr><td>Total</td><td colspan=2>$TOTAL</td></tr></tfoot></table>"
-echo "</div>"
-
-# Script de contraseña
-echo "<script>
-const CLAVE_HASH = '$CLAVE';
+</div>
+<div id='contenido' style='display:none;'>
+<img src='https://img.freepik.com/vector-premium/caja-ahorros-monedas_773186-1394.jpg' class='logo'>
+<h1>Estado de cuenta: Juan</h1>
+<small>Generado: 26-02-2026 04:37</small><br>
+<small>Fecha de entrega: 13-Junio</small><br>
+<small>Aportes: 10 — Total: 1000.00</small><br>
+<span class='badge-ok'>Al día</span><br><br>
+<table><thead><tr><th>Fecha</th><th>Monto</th><th>Evidencia</th></tr></thead><tbody>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen/' target='_blank'>Ver imagen</a></td></tr>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen/' target='_blank'>Ver imagen</a></td></tr>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen/' target='_blank'>Ver imagen</a></td></tr>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen' target='_blank'>Ver imagen</a></td></tr>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen/' target='_blank'>Ver imagen</a></td></tr>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen/' target='_blank'>Ver imagen</a></td></tr>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen/' target='_blank'>Ver imagen</a></td></tr>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen/' target='_blank'>Ver imagen</a></td></tr>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen/' target='_blank'>Ver imagen</a></td></tr>
+<tr><td>2026-02-26</td><td>100</td><td><a href='https://www.evolmind.com/blog/el-poder-didactico-de-la-imagen/' target='_blank'>Ver imagen</a></td></tr>
+</tbody><tfoot><tr><td>Total</td><td colspan=2>1000.00</td></tr></tfoot></table>
+</div>
+<script>
+const CLAVE_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
 
 async function checkPass() {
     const claveIngresada = document.getElementById('pass').value.trim();
@@ -260,11 +179,5 @@ async function checkPass() {
         alert('❌ Clave incorrecta');
     }
 }
-</script>"
-
-echo "</body></html>"
-} > "$OUT"
-
-echo "$OUT"
-
-
+</script>
+</body></html>

@@ -95,7 +95,7 @@ generar_reporte() {
         ultima="N/A"
 
         if [[ -s "$archivo_socio" ]]; then
-            while IFS=',' read -r f m e; do
+            while IFS=',' read -r f _ m e; do
                 total_socio=$(echo "$total_socio + $m" | bc)
                 aportaciones=$((aportaciones + 1))
                 ultima="$f"
@@ -160,7 +160,7 @@ generar_reporte_individual() {
         return
     fi
     
-    bash reporte_individual.sh "$socio"
+    bash lib/reporte_individual.sh "$socio"
     pausa
 }
 
@@ -190,7 +190,7 @@ enviar_whatsapp() {
         return
     fi
 
-    archivo=$(./reporte_individual.sh "$socio")
+    archivo=$(./lib/reporte_individual.sh "$socio")
 
     if [[ ! -f "$archivo" ]]; then
       echo -e "${ROJO}❌ Error: el archivo no existe o la ruta es inválida.${RESET}"
@@ -233,7 +233,7 @@ enviar_whatsapp() {
     link="https://xluffy025.github.io/caja-2026-reportes/reportes/$nombre_archivo"
 
     mensaje="Hola $socio, aquí está tu estado de cuenta: $link"
-    enviar_whatsapp "$tel" "$mensaje"
+    enviar_whatsapp_link "$tel" "$mensaje"
 
     cd - >/dev/null 2>&1
 }
@@ -251,7 +251,7 @@ enviar_whatsapp() {
       
       echo "Procesando: $socio"
       
-      archivo=$(./reporte_individual.sh "$socio")
+      archivo=$(./lib/reporte_individual.sh "$socio")
 
       if [[ "$archivo" == "ERROR_SOCIO" || -z "$archivo" ]]; then
         echo "  Error, se omite."
@@ -266,7 +266,7 @@ enviar_whatsapp() {
       mensaje="Hola $socio, aquí está tu estado de cuenta: $link"
 
       if [[ -n "$tel" ]]; then
-        enviar_whatsapp "$tel" "$mensaje"
+        enviar_whatsapp_link "$tel" "$mensaje"
       else
         echo "  No hay teléfono registrado."
       fi 
@@ -295,7 +295,7 @@ else
     OPEN_URL="xdg-open"
 fi
 
-enviar_whatsapp() {
+enviar_whatsapp_link() {
     tel="$1"
     mensaje="$2"
     url="https://wa.me/52$tel?text=$mensaje"
@@ -306,13 +306,13 @@ enviar_whatsapp() {
     probar_conexion_whatsapp() {
       echo -e "${VERDE}Abriendo WhatsApp Web...${RESET}"
       sleep 1 
-      termux-open-url "https://wa.me/528996750648?text=Prueba%20de%20conexion"
+      $OPEN_URL "https://wa.me/528996750648?text=Prueba%20de%20conexion"
     }
         clear
     echo -e "${CYAN}===========================${RESET}"
     echo -e "${MAGENTA}=== ENVÍO POR WHATSAPP ===${RESET}"
     echo -e "${CYAN}===========================${RESET}"
-    echo "1) Enviar mansaaje individual"
+    echo "1) Enviar mensaje individual"
     echo "2) Enviar reporte a todos los socios"
     echo "3) Probar conexion"
     echo -e "${ROJO}(0 para cancelar)${RESET}"
@@ -364,8 +364,7 @@ while true; do
         4) generar_reporte ;;
         5) generar_reporte_individual;;
         6) enviar_whatsapp ;;
-        7) respaldar ;;
-        8) configuracion ;;
+        7) configuracion ;;
         0) exit ;;
         *) err "Opción inválida."; sleep 1 ;;
     esac
