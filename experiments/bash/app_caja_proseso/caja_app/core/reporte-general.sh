@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#1!/usr/bin/env bash
 set -eou pipefail
 IFS=$'\n\t'
 
@@ -6,7 +6,7 @@ IFS=$'\n\t'
 #   FUNCIÓN: GENERAR REPORTE HTML
 # ==========================================
 clear
-echo -e "\e[1;32m=== GENERAR REPORTE HTML ===\e[0m"
+titulo "Generar Reporte HTML"
 
 fecha_reporte=$(date +"%Y-%m-%d_%H:%M:%S")
 archivo="$REPORTES_DIR/reporte_${fecha_reporte}.html"
@@ -102,4 +102,5 @@ cat >> "$archivo" << 'EOF'
 </html>
 EOF
 
-echo -e "\e[1;32m✓ Reporte generado: $archivo\e[0m"
+msg "Reporte generado: $archivo"
+sleep 3
