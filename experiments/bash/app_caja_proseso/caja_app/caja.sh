@@ -263,8 +263,8 @@ enviar_whatsapp() {
 # ==========================================
 configuracion() {
     clear
-    echo -e "\e[1;37m=== CONFIGURACIÓN ===\e[0m"
-    echo "Módulo en construcción..."
+    titulo "CONFIGURACIÓN"
+    msg "Módulo en construcción..."
     sleep 2
 }
 
