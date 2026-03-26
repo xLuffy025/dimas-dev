@@ -129,7 +129,7 @@ echo ""
 if confirmar "Confirmar registro de la aportación"; then
      
     # Si el usuario dijo "s", entra quí 
-    msg "Aportación registrada exitosamente."
+    msg "Registro realizado exitosamente."
     sleep 3
     break 
 
