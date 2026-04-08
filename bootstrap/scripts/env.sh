@@ -5,9 +5,9 @@
 set -u
 
 # ==== Detect TERMUX ====
-detect_termux() {
-  [[ -d "/data/data/com.termux/files/usr" && "$PREFIX" == *"/data/data/com.termux/files/usr"* ]]
-}
+# detect_termux() {
+#  [[ -d "/data/data/com.termux/files/usr" && "$PREFIX" == *"/data/data/com.termux/files/usr"* ]]
+#}
 
 # ==== Detect PROOT ====
 detect_proot() {
