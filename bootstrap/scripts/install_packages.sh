@@ -42,8 +42,8 @@ install_base_packages() {
       ;;
 
     apt)-
-      $SUDO apt update -y
-      $SUDO apt install -y git curl wget zsh vim neovim tmux python3 python3-pip \
+      $SUDO apt update -y && $SUDO apt upgrade -y
+      $SUDO apt install -y git curl wget zsh vim tmux python3 python3-pip \
         nodejs npm build-essential jq unzip tar ripgrep fd-find tree htop rsync ncdu nmap || warn "Algunos paquetes fallaron."
       ;;
 
@@ -100,10 +100,10 @@ install_gui_tools() {
   msg "Instalando herramientas con GUI (solo para distros completas)..."
   case "$PKG" in
     apt)
-      $SUDO apt install -y neofetch ranger || true
+      $SUDO apt install -y fastfetch ranger || true
       ;;
     pacman)
-      $SUDO pacman -S --noconfirm --needed neofetch ranger || true
+      $SUDO pacman -S --noconfirm --needed fastfetch ranger firefox kitty alacritty rofi dolphin thunar | true
       ;;
   esac
   ok "Herramientas gráficas instaladas (si aplica)."

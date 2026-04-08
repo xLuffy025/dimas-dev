@@ -19,6 +19,15 @@ warn(){ echo -e "${YELLOW}[!]${RESET} $1"; }
 err(){ echo -e "${RED}[✖]${RESET} $1"; }
 
 # ============================================================
+# 📦 DETECCIÒN DE DIRECTORIOS (Compatible con bare repo)
+# ============================================================
+# Obtener el directorio del scripts
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Obtener el directorio raìz del repositorio (un nivel arriba de bootstrap)
+REPO_DIR="$(cd "$SCRIPT_DIR/" && pwd)"
+
+# ============================================================
 # 📦 FUNCIONES PRINCIPALES
 # ============================================================
 
