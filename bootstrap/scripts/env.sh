@@ -25,12 +25,17 @@ detect_proot() {
 }
 
 # ==== Detect DISTRO (para Linux/Proot) ====
+
 detect_distro() {
   if [ -f /etc/os-release ]; then
-    ./etc/os-release
-    echo "${ID,,}"
+    . /etc/os-release
+    OS=$ID
+    #OS_VERSION=$VERSION_ID
+  elif [ -f /etc/lsb-release ]; then 
+    . /etc/lsb-release 
+    OS=$(echo $DISTROB_ID | tr '[:upper:]' '[:lower:]')
   else
-    echo "unknown"
+    OS="unknown"
   fi
 }
 
