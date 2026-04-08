@@ -19,22 +19,59 @@ warn(){ echo -e "${YELLOW}[!]${RESET} $1"; }
 err(){ echo -e "${RED}[✖]${RESET} $1"; }
 
 # ============================================================
-# 📦 DETECCIÒN DE DIRECTORIOS (Compatible con bare repo)
+# 📂 DETECCIÒN DE DIRECTORIOS (Compatible con bare repo)
 # ============================================================
 # Obtener el directorio del scripts
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Obtener el directorio raìz del repositorio (un nivel arriba de bootstrap)
+# Obtener el directorio raíz del repositorio (un nivel arriba de bootstrap)
 REPO_DIR="$(cd "$SCRIPT_DIR/" && pwd)"
 
+# Verificar que el repositorio es válido
+if [ ! -d "$REPO_DIR" ]; then 
+  err "No se puede encontrar el directorio raíz del repositorio"
+  exit 1
+fi 
+
+# Cambiar al directorio del repositorio
+cd "$REPO_DIR" || exit 1
+
+msg "Directorio de trabajo: $REPO_DIR"
+msh "Directorio de scripts: $REPO_DIR/scripts"
+# ============================================================
+# ✅ VALIDACIÓN DE DEPENDENCIAS
+# ============================================================
+validar_archivos() {
+  local archivo=$1
+  if [ ! -f "$REPO_DIR/$archivo" ]; then 
+    err "Archivo no encontrado: $REPO_DIR/$archivo"
+    return 1
+  fi 
+  return 0
+}
+
+validar_directorio() {
+  local directorio=$1
+  if  [ ! -d "$REPO_DIR/$directorio" ]; then
+    err "Directorio no encontrado: $REPO_DIR/$directorio"
+    return 1 
+  fi 
+  return 0 
+}
 # ============================================================
 # 📦 FUNCIONES PRINCIPALES
 # ============================================================
 
 instalar_basicos(){
   msg "Instalando paquetes esenciales..."
+  
+  if validar_archivos "scripts/install_packages.sh"; then  
   bash scripts/install_packages.sh || err "Error al instalar paquetes básicos"
   ok "Dependencias básicas instaladas."
+else 
+  err "script de paquete no encontrado"
+  return 1
+  fi
 }
 
 instalar_zsh(){
