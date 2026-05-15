@@ -37,6 +37,13 @@ def descargar_contenido(url, carpeta_destino, formato="mp3"):
 
     if formato == "mp3":
         ydl_opts = {
+            "ignoreerrors": True,# salta videos no disponibles en vez de abortar
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["web", "android"],
+                    }
+            },
+
             "format": "bestaudio[ext=m4a]/bestaudio",
             "outtmpl": os.path.join(
                 carpeta_destino,
@@ -49,7 +56,7 @@ def descargar_contenido(url, carpeta_destino, formato="mp3"):
                     "preferredquality": "192",
                 }
             ],
-            "noplaylist": True,
+            "#noplaylist": False,
             "quiet": False,
             "retries": 5,
             "fragment_retries": 5,
@@ -59,12 +66,19 @@ def descargar_contenido(url, carpeta_destino, formato="mp3"):
         }
     else:  # MP4
         ydl_opts = {
+            "ignoreerrors": True,# salta videos no disponibles en vez de abortar
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["web", "android"],
+                    }
+            },
+
             "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
             "outtmpl": os.path.join(
                 carpeta_destino,
                 "%(uploader|Unknown)s - %(title)s.%(ext)s"
             ),
-            "noplaylist": True,
+            "#noplaylist": False,
             "quiet": False,
             "retries": 5,
             "fragment_retries": 5,
