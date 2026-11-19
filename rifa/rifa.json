@@ -1,0 +1,42 @@
+{
+  "01": {
+    "nombre": "Dana Puente",
+    "pagado": true
+  },
+  "02": {
+    "nombre": "Alexis Zumaya",
+    "pagado": false
+  },
+  "03": {
+    "nombre": "Jeny Sambrano",
+    "pagado": true
+  },
+  "04": {
+    "nombre": "Frut Lauren",
+    "pagado": false
+  },
+  "05": {
+    "nombre": "Mari Olivares",
+    "pagado": false
+  },
+  "06": {
+    "nombre": "Aide Hernandez",
+    "pagado": false
+  },
+  "07": {
+    "nombre": "Cinthia Reyas",
+    "pagado": false
+  },
+  "08": {
+    "nombre": "Aitana Nicol",
+    "pagado": true
+  },
+  "09": {
+    "nombre": "Beatriz Dimas",
+    "pagado": false
+  },
+  "10": {
+    "nombre": "abigail valdez",
+    "pagado": false
+  }
+}
